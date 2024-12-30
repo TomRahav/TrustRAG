@@ -64,8 +64,8 @@ test_params = {
     'note': None
 }
 
-for dataset in ['hotpotqa']: # , 'nq', 'msmarco']:
-    for model in ["/media/NAS08/USER_PATH/hc/mistralai/Mistral-Nemo-Instruct-2407"]:
+for dataset in ['hotpotqa', 'nq', 'msmarco']:
+    for model in ["mistralai/Mistral-Nemo-Instruct-2407"]:
         for  number_of_adv in [5,4,3,2,1]:
             test_params['eval_dataset'] = dataset
             test_params['adv_per_query']=number_of_adv
