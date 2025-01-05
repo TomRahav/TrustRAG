@@ -22,3 +22,16 @@ pip install rouge_score
 python run_trustrag.py
 ```
 
+## 📝 Citation and Reference
+
+If you find this paper useful, please consider staring 🌟 this repo and citing 📑 our paper:
+
+```
+@article{zhou2025trustrag,
+  title={TrustRAG: Enhancing Robustness and Trustworthiness in RAG},
+  author={Zhou, Huichi and Lee, Kin-Hei and Zhan, Zhonghao and Chen, Yue and Li, Zhenhao},
+  journal={arXiv preprint arXiv:2501.00879},
+  year={2025}
+}
+```
+
