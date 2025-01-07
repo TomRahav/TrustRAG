@@ -1,6 +1,8 @@
 # 🔥 TrustRAG: Enhancing Robustness and Trustworthiness in RAG
 [[Project page]](https://trust-rag.github.io/) [[Paper]](https://arxiv.org/pdf/2501.00879)
-[Huichi Zhou](https://huichizhou.github.io/)<sup>1</sup>,[Kin-Hei Lee](https://openreview.net/profile?id=~Lee_KinHei1)<sup>1</sup>,[Zhonghao Zhan](https://zhonghaozhan.github.io/)<sup>1</sup>,[Yue Chen]()<sup>2</sup>,[Zhenhao Li](https://zhenhaoli.net/)<sup>1</sup>,
+
+[Huichi Zhou](https://huichizhou.github.io/)<sup>1</sup>,[Kin-Hei Lee](https://openreview.net/profile?id=~Lee_KinHei1)<sup>1</sup>,[Zhonghao Zhan](https://zhonghaozhan.github.io/)<sup>1</sup>,[Yue Chen]()<sup>2</sup>,[Zhenhao Li](https://zhenhaoli.net/)<sup>1</sup>
+
 <sup>1</sup>Imperial College London,<sup>2</sup>Peking University
 
 <img src="media/Method.jpg" alt="drawing" width="100%"/>
