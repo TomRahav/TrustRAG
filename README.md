@@ -52,14 +52,3 @@ If you find this paper useful, please consider staring 🌟 this repo and citing
   year={2025}
 }
 ```
-
-```
-@misc{zou2024poisonedrag,
-      title={PoisonedRAG: Knowledge Poisoning Attacks to Retrieval-Augmented Generation of Large Language Models}, 
-      author={Wei Zou and Runpeng Geng and Binghui Wang and Jinyuan Jia},
-      year={2024},
-      eprint={2402.07867},
-      archivePrefix={arXiv},
-      primaryClass={cs.CR}
-}
-```
