@@ -28,6 +28,8 @@ pip install nltk
 
 pip install rouge_score
 
+cd TrustRAG
+
 python run_trustrag.py
 ```
 
