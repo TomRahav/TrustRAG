@@ -11,7 +11,7 @@
 
 ## 🔥 NEWS
 
-- 2025.1.10 OpenAI API Inference Now Supported!
+- 2025.1.10 OpenAI API Inference Now Supported! Additionally, we have introduced a new module: Self-Assessment of Retrieval Correctness, enabling enhanced evaluation of retrieval accuracy.
 
 ## 🛝 Try it out!
 
