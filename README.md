@@ -9,6 +9,10 @@
 
 <img src="media/Method.jpg" alt="drawing" width="100%"/>
 
+## 🔥 NEWS
+
+- 2025.1.10 OpenAI API Inference Now Supported!
+
 ## 🛝 Try it out!
 
 ### 🛠️ Installation
