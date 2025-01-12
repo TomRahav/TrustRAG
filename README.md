@@ -1,7 +1,7 @@
 # 🔥 TrustRAG: Enhancing Robustness and Trustworthiness in RAG
 [[Project page]](https://trust-rag.github.io/) [[Paper]](https://arxiv.org/pdf/2501.00879)
 
-[Huichi Zhou*](https://huichizhou.github.io/)<sup>1</sup>, [Kin-Hei Lee*](https://openreview.net/profile?id=~Lee_KinHei1)<sup>1</sup>, [Zhonghao Zhan*](https://zhonghaozhan.github.io/)<sup>1</sup>, [Yue Chen]()<sup>2</sup>, [Zhenhao Li](https://zhenhaoli.net/)<sup>1</sup>, [Emine Yilmaz](https://scholar.google.com/citations?hl=en&user=ocmAN4YAAAAJ)<sup>3</sup>
+[Huichi Zhou*](https://huichizhou.github.io/)<sup>1</sup>, [Kin-Hei Lee*](https://openreview.net/profile?id=~Lee_KinHei1)<sup>1</sup>, [Zhonghao Zhan*](https://zhonghaozhan.github.io/)<sup>1</sup>, [Yue Chen]()<sup>2</sup>, [Zhenhao Li](https://zhenhaoli.net/)<sup>1</sup>, [Zhaoyang Wang]()<sup>2</sup>, [Hamed Haddadi](https://scholar.google.com/citations?hl=en&user=gkA7zvoAAAAJ&view_op=list_works)<sup>2</sup>, [Emine Yilmaz](https://scholar.google.com/citations?hl=en&user=ocmAN4YAAAAJ)<sup>3</sup>
 
 <sup>1</sup>Imperial College London, <sup>2</sup>Peking University, <sup>3</sup>University College London
 
