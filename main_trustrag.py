@@ -214,7 +214,7 @@ def main():
                 questions.append(question)
                 top_ks.append(topk_contents)
     if args.model_name != "gpt4":
-        backend_config = TurbomindEngineConfig(tp=2)
+        backend_config = TurbomindEngineConfig(tp=1)
         sampling_params = GenerationConfig(
                                     temperature=0.01,
                                     max_new_tokens=4096)
