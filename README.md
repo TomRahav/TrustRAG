@@ -9,6 +9,10 @@
 
 <img src="media/Method.jpg" alt="drawing" width="100%"/>
 
+## 🔥 NEWS
+
+- 2025.1.10 OpenAI API Inference Now Supported! Additionally, we have introduced a new module: Self-Assessment of Retrieval Correctness, enabling enhanced evaluation of retrieval accuracy.
+
 ## 🛝 Try it out!
 
 ### 🛠️ Installation
@@ -27,6 +31,8 @@ pip install beir
 pip install nltk
 
 pip install rouge_score
+
+cd TrustRAG
 
 python run_trustrag.py
 ```
@@ -50,16 +56,5 @@ If you find this paper useful, please consider staring 🌟 this repo and citing
   author={Zhou, Huichi and Lee, Kin-Hei and Zhan, Zhonghao and Chen, Yue and Li, Zhenhao},
   journal={arXiv preprint arXiv:2501.00879},
   year={2025}
-}
-```
-
-```
-@misc{zou2024poisonedrag,
-      title={PoisonedRAG: Knowledge Poisoning Attacks to Retrieval-Augmented Generation of Large Language Models}, 
-      author={Wei Zou and Runpeng Geng and Binghui Wang and Jinyuan Jia},
-      year={2024},
-      eprint={2402.07867},
-      archivePrefix={arXiv},
-      primaryClass={cs.CR}
 }
 ```

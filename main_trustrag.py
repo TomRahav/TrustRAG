@@ -11,7 +11,7 @@ from defend_module import *
 import pickle
 from lmdeploy import pipeline, GenerationConfig, TurbomindEngineConfig
 from transformers import AutoTokenizer, AutoModel
-
+from src.gpt4_model import GPT
 
 
 def load_cached_data(cache_file, load_function, *args, **kwargs):
@@ -213,25 +213,37 @@ def main():
 
                 questions.append(question)
                 top_ks.append(topk_contents)
-
-    backend_config = TurbomindEngineConfig(tp=2)
-    sampling_params = GenerationConfig(
-                                temperature=0.01,
-                                max_new_tokens=4096)
-    llm = pipeline(args.model_name,
-                backend_config=backend_config)
-    
-    if(args.conflict==True):
-        final_answers, internal_knowledges, stage_two_responses = conflict_query(top_ks, questions, llm, sampling_params)
-    elif(args.astute==True):
-        final_answers = astute_query(top_ks, questions, llm, sampling_params)
-    elif(args.instruct==True):
-        final_answers = instructrag_query(top_ks, questions, llm, sampling_params)
+    if args.model_name != "gpt4":
+        backend_config = TurbomindEngineConfig(tp=1)
+        sampling_params = GenerationConfig(
+                                    temperature=0.01,
+                                    max_new_tokens=4096)
+        llm = pipeline(args.model_name,
+                    backend_config=backend_config)
+    if args.model_name != "gpt4":
+        if(args.conflict==True):
+            final_answers, internal_knowledges, stage_two_responses = conflict_query(top_ks, questions, llm, sampling_params)
+        elif(args.astute==True):
+            final_answers = astute_query(top_ks, questions, llm, sampling_params)
+        elif(args.instruct==True):
+            final_answers = instructrag_query(top_ks, questions, llm, sampling_params)
+        else:
+            final_answer = llm(query_prompts, sampling_params)
+            final_answers = []
+            for item in final_answer:
+                final_answers.append(item.text)
     else:
-        final_answer = llm(query_prompts, sampling_params)
-        final_answers = []
-        for item in final_answer:
-            final_answers.append(item.text)
+        llm = GPT()
+        if(args.conflict==True):
+            final_answers, internal_knowledges, stage_two_responses = conflict_query_gpt(top_ks, questions, llm)
+        elif(args.astute==True):
+            final_answers = astute_query_gpt(top_ks, questions, llm)
+        elif(args.instruct==True):
+            final_answers = instructrag_query_gpt(top_ks, questions, llm)
+        else:
+            final_answers = []
+            for query in query_prompts:
+                final_answers.append(llm.query(query))
 
 
     asr_count = 0
