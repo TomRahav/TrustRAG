@@ -32,6 +32,8 @@ pip install nltk
 
 pip install rouge_score
 
+pip install timm==0.9.2
+
 cd TrustRAG
 
 python run_trustrag.py
