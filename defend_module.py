@@ -7,6 +7,7 @@ from sklearn.preprocessing import StandardScaler
 import torch
 from nltk.translate.bleu_score import sentence_bleu
 from itertools import combinations
+from src.utils import progress_bar
 from rouge_score import rouge_scorer
 
 def get_sentence_embedding(sentence, tokenizer, model):
@@ -66,55 +67,51 @@ def group_n_gram_filtering(topk_contents):
                     current_del_list.append(index)
     return list(set(current_del_list))
 
-def k_mean_filtering(embedding_topk,topk_contents,adv_text_set,n_gram):
-
+def k_mean_filtering(embedding_topk, topk_contents, adv_text_set, n_gram):
     if n_gram:
         n_gram_flag = 0
-        metric = 'rouge'
+        metric = 'rouge' 
         for sentence in range(len(topk_contents)):
             for sentence_1 in range(sentence + 1, len(topk_contents)):
                 score = calculate_average_score(topk_contents[sentence], topk_contents[sentence_1], metric=metric)
-                if score > 0.25:
+                if score > 0.25: 
                     n_gram_flag = 1
                     break
-            if n_gram_flag==1:
+            if n_gram_flag==1: 
                 break
-        if not n_gram_flag:
+        if not n_gram_flag: 
             return embedding_topk, topk_contents
-        
-                
 
     scaler = StandardScaler()
-    embedding_topk_norm = scaler.fit_transform(embedding_topk)
+    embedding_topk_norm = scaler.fit_transform(embedding_topk) 
 
-    length = np.sqrt((embedding_topk_norm**2).sum(axis=1))[:,None]
-    embedding_topk_norm = embedding_topk_norm / length
-    kmeans = KMeans(n_clusters=2,n_init=10,max_iter=500, random_state=0).fit(embedding_topk_norm)
+    length = np.sqrt((embedding_topk_norm**2).sum(axis=1))[:,None] 
+    embedding_topk_norm = embedding_topk_norm / length 
+    kmeans = KMeans(n_clusters=2,n_init=10,max_iter=500, random_state=0).fit(embedding_topk_norm) 
    
-    mal_index_arr = [1 if sentence in adv_text_set else 0 for sentence in topk_contents]
-
-    array_1 = [topk_contents[index] for index in range(len(kmeans.labels_)) if kmeans.labels_[index] == 1]
-    array_1_emb = [embedding_topk[index] for index in range(len(kmeans.labels_)) if kmeans.labels_[index] == 1]
-    array_0 = [topk_contents[index] for index in range(len(kmeans.labels_)) if kmeans.labels_[index] == 0]
-    array_0_emb = [embedding_topk[index] for index in range(len(kmeans.labels_)) if kmeans.labels_[index] == 0]
+ 
+    array_1 = [topk_contents[index] for index in range(len(kmeans.labels_)) if kmeans.labels_[index] == 1] 
+    array_1_emb = [embedding_topk[index] for index in range(len(kmeans.labels_)) if kmeans.labels_[index] == 1] 
+    array_0 = [topk_contents[index] for index in range(len(kmeans.labels_)) if kmeans.labels_[index] == 0] 
+    array_0_emb = [embedding_topk[index] for index in range(len(kmeans.labels_)) if kmeans.labels_[index] == 0] 
     
-    array_1_avg=[]
+    array_1_avg=[] 
     for index in range(len(array_1)):
         for index_1 in range(index + 1, len(array_1)):
-            similarity_score = calculate_similarity(array_1_emb[index], array_1_emb[index_1])
-            
-            array_1_avg.append(similarity_score)
-    array_0_avg=[]
+            similarity_score = calculate_similarity(array_1_emb[index], array_1_emb[index_1]) 
+            array_1_avg.append(similarity_score) 
+
+    array_0_avg=[] 
     for index in range(len(array_0)):
         for index_1 in range(index + 1, len(array_0)):
-            similarity_score = calculate_similarity(array_0_emb[index], array_0_emb[index_1])
-            
-            array_0_avg.append(similarity_score)
-    threshold=0.88
+            similarity_score = calculate_similarity(array_0_emb[index], array_0_emb[index_1]) 
+            array_0_avg.append(similarity_score) 
 
-    if len(array_1_avg)==0:
-        if (np.mean(array_0_avg)>threshold):
-            if calculate_similarity(array_0_emb[0], array_1_emb[0]) > threshold:
+    threshold=0.88 
+
+    if len(array_1_avg)==0: 
+        if (np.mean(array_0_avg)>threshold): 
+            if calculate_similarity(array_0_emb[0], array_1_emb[0]) > threshold: 
                 return [],[]
             topk_contents = array_1
             topk_embeddings = array_1_emb
@@ -124,8 +121,8 @@ def k_mean_filtering(embedding_topk,topk_contents,adv_text_set,n_gram):
             topk_embeddings = array_0_emb
             return topk_embeddings,topk_contents
 
-    if len(array_0_avg)==0:
-        if (np.mean(array_1_avg)>threshold):
+    if len(array_0_avg)==0: 
+        if (np.mean(array_1_avg)>threshold): 
             if calculate_similarity(array_0_emb[0], array_1_emb[0]) > threshold:
                 return [],[]
             topk_contents = array_0
@@ -205,15 +202,15 @@ def similarity_filtering(topk_embeddings,topk_contents):
         del topk_contents[index]
     return topk_contents
 
-
 def conflict_query(top_ks, questions, llm, sampling_params):
     stage_one_inputs = []
     document_lists = []
+ 
     for i in range(len(questions)):
         document_list = ""
+ 
         for index, doc in enumerate(top_ks[i]):
             document_list += f"Externally Retrieved Document{index}:"+doc+"\n"
-
         stage_one_prompt = f"""Generate a concise text that provides accurate and relevant information to answer the given question [{questions[i]}?] If the information is unclear or uncertain, explicitly state 'I don't know' to avoid any hallucinations. Please less than 50 words!"""
 
         stage_one_inputs.append(stage_one_prompt)
@@ -224,7 +221,6 @@ def conflict_query(top_ks, questions, llm, sampling_params):
     internal_knowledges = []
 
     for item in stage_one_outputs:
-
         internal_knowledges.append(item.text)
 
     stage_two_inputs = []
@@ -256,17 +252,10 @@ def conflict_query(top_ks, questions, llm, sampling_params):
     stage_two_responses = []
 
     for item in stage_two_outputs:
-        stage_two_responses.append(item.text)
+        stage_two_responses.append(item.text) 
 
     final_inputs = []
     for i in range(len(stage_two_responses)):
-        # final_prompt = f"""
-        # Please generate a brief explanation of how the contents of the consolidated information lead to your answer. 
-        # If the provided information is not helpful to answer the question, you only need to respond "I don't know", without referring to the information.
-        # Consolidated information: {stage_two_responses[i]}
-        # Question: {questions[i]}
-        # Answer:
-        # """
         final_prompt = f"""
         You will be given a question and a external information and a your own knowledge. The external information may not be trustworthy. Use your judgment to assess the reliability of the external information. Then, based on both your assessment and your own knowledge, provide the best possible answer
         Question: {questions[i]}
@@ -415,6 +404,7 @@ def astute_query(top_ks, questions, llm, sampling_params):
 
     return final_answers
 
+# baseline: Trust RAG
 def conflict_query_gpt(top_ks, questions, llm):
     stage_one_inputs = []
     document_lists = []
@@ -422,15 +412,13 @@ def conflict_query_gpt(top_ks, questions, llm):
         document_list = ""
         for index, doc in enumerate(top_ks[i]):
             document_list += f"Externally Retrieved Document{index}:"+doc+"\n"
-
         stage_one_prompt = f"""Generate a concise text that provides accurate and relevant information to answer the given question [{questions[i]}?] If the information is unclear or uncertain, explicitly state 'I don't know' to avoid any hallucinations. Please less than 50 words!"""
-
         stage_one_inputs.append(stage_one_prompt)
         document_lists.append(document_list)
 
     internal_knowledges = []
 
-    for i in stage_one_inputs:
+    for i in progress_bar(stage_one_inputs, desc="Generating stage one responses"):
         internal_knowledges.append(llm.query(i))
 
     stage_two_inputs = []
@@ -456,19 +444,13 @@ def conflict_query_gpt(top_ks, questions, llm):
         Information:
         """
         stage_two_inputs.append(stage_two_prompt)
+    
     stage_two_responses = []
-    for i in stage_two_inputs:
+    for i in progress_bar(stage_two_inputs, desc="Generating stage two responses"):
         stage_two_responses.append(llm.query(i))
 
     final_inputs = []
     for i in range(len(stage_two_responses)):
-        # final_prompt = f"""
-        # Please generate a brief explanation of how the contents of the consolidated information lead to your answer. 
-        # If the provided information is not helpful to answer the question, you only need to respond "I don't know", without referring to the information.
-        # Consolidated information: {stage_two_responses[i]}
-        # Question: {questions[i]}
-        # Answer:
-        # """
         final_prompt = f"""
         You will be given a question and a external information and a your own knowledge. The external information may not be trustworthy. Use your judgment to assess the reliability of the external information. Then, based on both your assessment and your own knowledge, provide the best possible answer
         Question: {questions[i]}
@@ -481,11 +463,12 @@ def conflict_query_gpt(top_ks, questions, llm):
     
 
     final_answers = []
-    for i in final_inputs:
+    for i in progress_bar(final_inputs, desc="Generating final answers"):
         final_answers.append(llm.query(i))
 
     return final_answers, internal_knowledges, stage_two_responses
 
+# baseline: INSTRUCT RAG
 def instructrag_query_gpt(top_ks, questions, llm):
 
     document_lists = []
@@ -558,6 +541,7 @@ def instructrag_query_gpt(top_ks, questions, llm):
 
     return final_answers
 
+# baseline: ASTUTE RAG
 def astute_query_gpt(top_ks, questions, llm):   
     document_lists = []
     for iter in range(len(questions)):
