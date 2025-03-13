@@ -1,10 +1,8 @@
 from sentence_transformers import SentenceTransformer
 import torch
 import random
-from tqdm import tqdm
-from src.utils import load_json
-import json
-import os
+from src.utils import load_json, progress_bar
+from loguru import logger
 
 class GradientStorage:
     """
@@ -55,36 +53,33 @@ def hotflip_attack(averaged_grad,
 
 class Attacker():
     def __init__(self, args, **kwargs) -> None:
-        # assert args.attack_method in ['default', 'whitebox']
         self.args = args
         self.attack_method = args.attack_method
         self.adv_per_query = args.adv_per_query
-        
         self.model = kwargs.get('model', None)
         self.c_model = kwargs.get('c_model', None)
         self.tokenizer = kwargs.get('tokenizer', None)
         self.get_emb = kwargs.get('get_emb', None)
-        
-        if args.attack_method == 'hotflip':
+        if 'hotflip' in args.attack_method:
             self.max_seq_length = kwargs.get('max_seq_length', 128)
             self.pad_to_max_length = kwargs.get('pad_to_max_length', True)
             self.per_gpu_eval_batch_size = kwargs.get('per_gpu_eval_batch_size', 64)
             self.num_adv_passage_tokens = kwargs.get('num_adv_passage_tokens', 30)            
-
             self.num_cand = kwargs.get('num_cand', 100)
             self.num_iter = kwargs.get('num_iter', 30)
             self.gold_init = kwargs.get('gold_init', True)
             self.early_stop = kwargs.get('early_stop', False)
-    
         self.all_adv_texts = load_json(f'results/adv_targeted_results/{args.eval_dataset}.json')
+        logger.info(f"Initializing attacker with method: {args.attack_method}")
 
     def get_attack(self, target_queries) -> list:
         '''
         This function returns adv_text_groups, which contains adv_texts for M queries
         For each query, if adv_per_query>1, we use different generated adv_texts or copies of the same adv_text
         '''
-        adv_text_groups = [] # get the adv_text for the iter
+        adv_text_groups = [] 
         if self.attack_method == "LM_targeted":
+            # blackbox attack
             for i in range(len(target_queries)):
                 question = target_queries[i]['query']
                 id = target_queries[i]['id']
@@ -94,15 +89,15 @@ class Attacker():
                 adv_text_groups.append(adv_texts)  
         elif self.attack_method == 'hotflip':
             adv_text_groups = self.hotflip(target_queries)
-        else: raise NotImplementedError
+        else: 
+            raise NotImplementedError
         return adv_text_groups       
      
 
     def hotflip(self, target_queries, adv_b=None, **kwargs) -> list:
         device = 'cuda'
-        print('Doing HotFlip attack!')
         adv_text_groups = []
-        for query_score in tqdm(target_queries):
+        for query_score in progress_bar(target_queries, desc="Processing HotFlip queries"):
             query = query_score['query']
             top1_score = query_score['top1_score']
             id = query_score['id']
@@ -115,17 +110,16 @@ class Attacker():
                 if self.gold_init:
                     adv_a = query
                     adv_a = self.tokenizer(adv_a, max_length=self.max_seq_length, truncation=True, padding=False)['input_ids']
-
-                else: # init adv passage using [MASK]
+                else: 
                     adv_a = [self.tokenizer.mask_token_id] * self.num_adv_passage_tokens
 
-                embeddings = get_embeddings(self.c_model)
-                embedding_gradient = GradientStorage(embeddings)
+                embeddings = get_embeddings(self.c_model) 
+                embedding_gradient = GradientStorage(embeddings) 
                 
-                adv_passage = adv_a + adv_b # token ids
-                adv_passage_ids = torch.tensor(adv_passage, device=device).unsqueeze(0)
-                adv_passage_attention = torch.ones_like(adv_passage_ids, device=device)
-                adv_passage_token_type = torch.zeros_like(adv_passage_ids, device=device)  
+                adv_passage = adv_a + adv_b 
+                adv_passage_ids = torch.tensor(adv_passage, device=device).unsqueeze(0) 
+                adv_passage_attention = torch.ones_like(adv_passage_ids, device=device)     
+                adv_passage_token_type = torch.zeros_like(adv_passage_ids, device=device) 
 
                 q_sent = self.tokenizer(query, max_length=self.max_seq_length, truncation=True, padding="max_length" if self.pad_to_max_length else False, return_tensors="pt")
                 q_sent = {key: value.cuda() for key, value in q_sent.items()}

@@ -10,7 +10,8 @@ from typing import List, Tuple
 
 import faiss
 import numpy as np
-from tqdm import tqdm
+from src.utils import progress_bar
+from loguru import logger
 
 class Indexer(object):
 
@@ -29,13 +30,13 @@ class Indexer(object):
             self.index.train(embeddings)
         self.index.add(embeddings)
 
-        print(f'Total data indexed {len(self.index_id_to_db_id)}')
+        logger.info(f'Total data indexed {len(self.index_id_to_db_id)}')
 
     def search_knn(self, query_vectors: np.array, top_docs: int, index_batch_size: int = 2048) -> List[Tuple[List[object], List[float]]]:
         query_vectors = query_vectors.astype('float32')
         result = []
         nbatch = (len(query_vectors)-1) // index_batch_size + 1
-        for k in tqdm(range(nbatch)):
+        for k in progress_bar(range(nbatch), desc="Searching KNN batches"):
             start_idx = k*index_batch_size
             end_idx = min((k+1)*index_batch_size, len(query_vectors))
             q = query_vectors[start_idx: end_idx]
@@ -48,7 +49,7 @@ class Indexer(object):
     def serialize(self, dir_path):
         index_file = os.path.join(dir_path, 'index.faiss')
         meta_file = os.path.join(dir_path, 'index_meta.faiss')
-        print(f'Serializing index to {index_file}, meta data to {meta_file}')
+        logger.info(f'Serializing index to {index_file}, meta data to {meta_file}')
 
         faiss.write_index(self.index, index_file)
         with open(meta_file, mode='wb') as f:
@@ -57,10 +58,10 @@ class Indexer(object):
     def deserialize_from(self, dir_path):
         index_file = os.path.join(dir_path, 'index.faiss')
         meta_file = os.path.join(dir_path, 'index_meta.faiss')
-        print(f'Loading index from {index_file}, meta data from {meta_file}')
+        logger.info(f'Loading index from {index_file}, meta data from {meta_file}')
 
         self.index = faiss.read_index(index_file)
-        print('Loaded index of type %s and size %d', type(self.index), self.index.ntotal)
+        logger.info(f'Loaded index of type {type(self.index)} and size {self.index.ntotal}')
 
         with open(meta_file, "rb") as reader:
             self.index_id_to_db_id = pickle.load(reader)
