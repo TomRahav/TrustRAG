@@ -100,6 +100,7 @@ def main():
     top_ks = []
     incorrect_answer_list = []
     correct_answer_list = []
+    ret_sublist=[]
 
     for iter in progress_bar(range(args.repeat_times), desc="Processing iterations"):
         model.cuda()
@@ -120,7 +121,7 @@ def main():
             with torch.no_grad():
                 adv_embs = get_emb(c_model, adv_input)        
        
-        ret_sublist=[]
+        
         iter_results = []
 
         for i in progress_bar(target_queries_idx, desc="Processing target queries"):
@@ -190,7 +191,7 @@ def main():
                 questions.append(question)
                 top_ks.append(topk_contents)
     # success injection rate in top k contents
-    total_topk_num = len(target_queries_idx) * args.top_k # total number of topk contents
+    total_topk_num = len(target_queries_idx) * args.top_k * args.repeat_times # total number of topk contents
     total_injection_num = sum(ret_sublist) # total number of adv texts in topk contents
     logger.info(f"total_topk_num: {total_topk_num}") 
     logger.info(f"total_injection_num: {total_injection_num}")
