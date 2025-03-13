@@ -36,7 +36,7 @@ pip install timm==0.9.2
 
 cd TrustRAG
 
-python run_trustrag.py
+python run.py
 ```
 
 ## 🙏 Acknowledgement
