@@ -54,8 +54,8 @@ If you find this paper useful, please consider staring 🌟 this repo and citing
 
 ```
 @article{zhou2025trustrag,
-  title={TrustRAG: Enhancing Robustness and Trustworthiness in RAG},
-  author={Zhou, Huichi and Lee, Kin-Hei and Zhan, Zhonghao and Chen, Yue and Li, Zhenhao},
+  title={Trustrag: Enhancing robustness and trustworthiness in rag},
+  author={Zhou, Huichi and Lee, Kin-Hei and Zhan, Zhonghao and Chen, Yue and Li, Zhenhao and Wang, Zhaoyang and Haddadi, Hamed and Yilmaz, Emine},
   journal={arXiv preprint arXiv:2501.00879},
   year={2025}
 }
