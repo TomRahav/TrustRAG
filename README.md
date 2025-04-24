@@ -24,16 +24,7 @@ conda create -n trustrag python=3.10
 
 conda activate trustrag
 
-pip install lmdeploy
-
-pip install beir
-
-pip install nltk
-
-pip install rouge_score
-
-pip install timm==0.9.2
-
+pip install lmdeploy beir nltk rouge_score timm==0.9.2 loguru 
 cd TrustRAG
 
 python run.py
