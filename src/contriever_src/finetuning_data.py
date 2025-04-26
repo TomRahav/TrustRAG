@@ -3,8 +3,6 @@
 import torch
 import random
 import json
-import sys
-import numpy as np
 from . import normalize_text
 
 

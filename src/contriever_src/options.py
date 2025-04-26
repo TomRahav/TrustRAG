@@ -115,7 +115,7 @@ class Options:
             comment = ""
             default = self.parser.get_default(k)
             if v != default:
-                comment = f"\t[default: %s]" % str(default)
+                comment = "\t[default: %s]" % str(default)
             message += f"{str(k):>40}: {str(v):<40}{comment}\n"
         print(message, flush=True)
         model_dir = os.path.join(opt.output_dir, "models")

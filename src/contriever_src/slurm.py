@@ -48,7 +48,7 @@ def init_distributed_mode(params):
         - global_rank
         - world_size
     """
-    is_slurm_job = 'SLURM_JOB_ID' in os.environ and not 'WORLD_SIZE' in os.environ
+    is_slurm_job = 'SLURM_JOB_ID' in os.environ and 'WORLD_SIZE' not in os.environ
     has_local_rank = hasattr(params, 'local_rank')
 
     # SLURM job without torch.distributed.launch

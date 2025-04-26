@@ -2,12 +2,8 @@
 
 import torch
 import torch.nn as nn
-import numpy as np
-import math
-import random
 import transformers
 import logging
-import torch.distributed as dist
 
 from . import contriever, dist_utils, utils
 

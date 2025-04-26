@@ -2,9 +2,7 @@ import numpy as np
 import torch
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
 from sklearn.preprocessing import StandardScaler
-import torch
 from nltk.translate.bleu_score import sentence_bleu
 from itertools import combinations
 from src.utils import progress_bar
@@ -374,7 +372,7 @@ def astute_query(top_ks, questions, llm, sampling_params):
 
     stage_two_inputs = []
     for iter in range(len(questions)):
-        document_list = document_lists[iter] + "\n" + f"Memorized Document:" + stage_one_outputs[iter] + "\n"
+        document_list = document_lists[iter] + "\n" + "Memorized Document:" + stage_one_outputs[iter] + "\n"
 
         final_prompt = f"""Task: Answer a given question using the consolidated information from both your own
         memorized documents and externally retrieved documents.
@@ -568,7 +566,7 @@ def astute_query_gpt(top_ks, questions, llm):
 
     stage_two_inputs = []
     for iter in range(len(questions)):
-        document_list = document_lists[iter] + "\n" + f"Memorized Document:" + stage_one_outputs[iter] + "\n"
+        document_list = document_lists[iter] + "\n" + "Memorized Document:" + stage_one_outputs[iter] + "\n"
 
         final_prompt = f"""Task: Answer a given question using the consolidated information from both your own
         memorized documents and externally retrieved documents.
