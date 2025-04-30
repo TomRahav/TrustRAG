@@ -1,0 +1,31 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File with Arguments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                "--log_name=test",
+                "--removal_method=none",
+                "--attack_method=hotflip",
+                "--defend_method=none",
+                "--model_name=huggyllama/llama-7b",
+                // "--model_name=mistralai/Mistral-Nemo-Instruct-2407",
+                "--M=10",
+                "--repeat_times=10",
+                "--adv_per_query=3",
+                "--score_function=dot",
+                "--adv_a_position=end",
+                "--eval_model_code=contriever",
+                // "--log_defense_stats",
+                "--llm_flag"
+            ]
+        }
+    ]
+}

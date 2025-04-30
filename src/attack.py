@@ -55,6 +55,7 @@ class Attacker:
         self.args = args
         self.attack_method = args.attack_method
         self.adv_per_query = args.adv_per_query
+        self.adv_a_position = args.adv_a_position
         self.model = kwargs.get("model", None)
         self.c_model = kwargs.get("c_model", None)
         self.tokenizer = kwargs.get("tokenizer", None)
@@ -94,7 +95,7 @@ class Attacker:
             raise NotImplementedError
         return adv_text_groups
 
-    def hotflip(self, target_queries, adv_b=None, **kwargs) -> list:
+    def hotflip(self, target_queries, **kwargs) -> list:
         device = "cuda"
         adv_text_groups = []
         for query_score in progress_bar(
@@ -128,7 +129,14 @@ class Attacker:
                 embeddings = get_embeddings(self.c_model)
                 embedding_gradient = GradientStorage(embeddings)
 
-                adv_passage = adv_a + adv_b
+                # 🛠️ Here we choose order based on adv_a_position
+                if self.adv_a_position == "start":
+                    adv_passage = adv_a + adv_b
+                elif self.adv_a_position == "end":
+                    adv_passage = adv_b + adv_a
+                else:
+                    raise ValueError(f"Invalid adv_a_position: {self.adv_a_position}")
+
                 adv_passage_ids = torch.tensor(adv_passage, device=device).unsqueeze(0)
                 adv_passage_attention = torch.ones_like(adv_passage_ids, device=device)
                 adv_passage_token_type = torch.zeros_like(
@@ -175,6 +183,8 @@ class Attacker:
                         grad += temp_grad.sum(dim=0)
 
                     token_to_flip = random.randrange(len(adv_a))
+                    if self.adv_a_position == "end":
+                        token_to_flip + len(adv_b)
                     candidates = hotflip_attack(
                         grad[token_to_flip],
                         embeddings.weight,
@@ -182,11 +192,8 @@ class Attacker:
                         num_candidates=self.num_cand,
                         filter=None,
                     )
-                    current_score = 0
+                    current_score = loss.sum().cpu().item()
                     candidate_scores = torch.zeros(self.num_cand, device=device)
-
-                    temp_score = loss.sum().cpu().item()
-                    current_score += temp_score
 
                     for i, candidate in enumerate(candidates):
                         temp_adv_passage = adv_passage_ids.clone()
@@ -205,8 +212,7 @@ class Attacker:
                             else:
                                 raise KeyError
                             can_loss = temp_sim.mean()
-                            temp_score = can_loss.sum().cpu().item()
-                            candidate_scores[i] += temp_score
+                            candidate_scores[i] = can_loss.sum().cpu().item()
 
                     # if find a better one, update
                     if (candidate_scores > current_score).any():
