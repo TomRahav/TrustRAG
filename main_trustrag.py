@@ -34,6 +34,20 @@ from loguru import logger
 from lmdeploy import pipeline, GenerationConfig, TurbomindEngineConfig
 from transformers import AutoTokenizer, AutoModel
 from src.gpt4_model import GPT
+import time
+from contextlib import contextmanager
+
+total_time = 0
+
+
+@contextmanager
+def timed(name="Block"):
+    global total_time
+    start = time.time()
+    yield
+    duration = time.time() - start
+    total_time += duration
+    logger.info(f"[{name}] took {duration:.2f} seconds")
 
 
 def parse_args():
@@ -309,8 +323,9 @@ def main():
                                     all_truncated_embeddings,
                                     dim=1,
                                 )
+                            scores = scores.cpu().detach().numpy().round(4)
                             logger.info(
-                                f"Similarity for sentence {i} and itself with truncated {args.adv_a_position}: {scores:.4f}"
+                                f"Similarity for sentence {i} and itself with truncated {args.adv_a_position}: {scores}"
                             )
                             self_similarity_scores.append(
                                 (
@@ -383,23 +398,24 @@ def main():
                     args.removal_method in ["kmeans", "kmeans_ngram"]
                 ) and args.top_k != 1:
                     logger.info("Using removal method: {}".format(args.removal_method))
-                    embedding_topk = [
-                        list(
-                            get_sentence_embedding(
-                                sentence, embedding_tokenizer, embedding_model
+                    with timed(f"Iter_{iter}_question_{i}_removal"):
+                        embedding_topk = [
+                            list(
+                                get_sentence_embedding(
+                                    sentence, embedding_tokenizer, embedding_model
+                                )
+                                .cpu()
+                                .numpy()[0]
                             )
-                            .cpu()
-                            .numpy()[0]
+                            for sentence in topk_contents
+                        ]
+                        embedding_topk = np.array(embedding_topk)
+                        embedding_topk, topk_contents = k_mean_filtering(
+                            embedding_topk,
+                            topk_contents,
+                            adv_text_set,
+                            "ngram" in args.removal_method,
                         )
-                        for sentence in topk_contents
-                    ]
-                    embedding_topk = np.array(embedding_topk)
-                    embedding_topk, topk_contents = k_mean_filtering(
-                        embedding_topk,
-                        topk_contents,
-                        adv_text_set,
-                        "ngram" in args.removal_method,
-                    )
                 else:
                     logger.info("Using no removal method")
 
@@ -437,50 +453,64 @@ def main():
             )
             sampling_params = GenerationConfig(temperature=0.01, max_new_tokens=1024)
             llm = pipeline(args.model_name, backend_config)
-            if args.defend_method == "conflict":
-                final_answers, internal_knowledges, stage_two_responses = (
-                    conflict_query(top_ks, questions, llm, sampling_params)
-                )
-                save_outputs(internal_knowledges, args.log_name, "internal_knowledges")
-                save_outputs(stage_two_responses, args.log_name, "stage_two_responses")
-            elif args.defend_method == "astute":
-                final_answers = astute_query(top_ks, questions, llm, sampling_params)
-            elif args.defend_method == "instruct":
-                final_answers = instructrag_query(
-                    top_ks, questions, llm, sampling_params
-                )
-            elif args.defend_method == "none":
-                final_answer = llm(query_prompts, sampling_params)
-                final_answers = []
-                for item in final_answer:
-                    final_answers.append(item.text)
-            else:
-                raise ValueError(f"Invalid defend method: {args.defend_method}")
+            with timed(f"Iter_{iter}_question_{i}_defense"):
+                if args.defend_method == "conflict":
+                    final_answers, internal_knowledges, stage_two_responses = (
+                        conflict_query(top_ks, questions, llm, sampling_params)
+                    )
+                    save_outputs(
+                        internal_knowledges, args.log_name, "internal_knowledges"
+                    )
+                    save_outputs(
+                        stage_two_responses, args.log_name, "stage_two_responses"
+                    )
+                elif args.defend_method == "astute":
+                    final_answers = astute_query(
+                        top_ks, questions, llm, sampling_params
+                    )
+                elif args.defend_method == "instruct":
+                    final_answers = instructrag_query(
+                        top_ks, questions, llm, sampling_params
+                    )
+                elif args.defend_method == "none":
+                    final_answer = llm(query_prompts, sampling_params)
+                    final_answers = []
+                    for item in final_answer:
+                        final_answers.append(item.text)
+                else:
+                    raise ValueError(f"Invalid defend method: {args.defend_method}")
         else:
             logger.info("Using {} as the LLM model".format(args.model_name))
             llm = GPT(args.model_name)
-            if args.defend_method == "conflict":
-                logger.info("Using conflict query for {}".format(args.model_name))
-                final_answers, internal_knowledges, stage_two_responses = (
-                    conflict_query_gpt(top_ks, questions, llm)
-                )
-                save_outputs(internal_knowledges, args.log_name, "internal_knowledges")
-                save_outputs(stage_two_responses, args.log_name, "stage_two_responses")
-            elif args.defend_method == "astute":
-                logger.info("Using astute query for {}".format(args.model_name))
-                final_answers = astute_query_gpt(top_ks, questions, llm)
-            elif args.defend_method == "instruct":
-                logger.info("Using instructrag query for {}".format(args.model_name))
-                final_answers = instructrag_query_gpt(top_ks, questions, llm)
-            elif args.defend_method == "none":
-                logger.info("Using llm.query for {}".format(args.model_name))
-                final_answers = []
-                for query in progress_bar(
-                    query_prompts, desc="Processing query prompts"
-                ):
-                    final_answers.append(llm.query(query))
-            else:
-                raise ValueError(f"Invalid defend method: {args.defend_method}")
+            with timed(f"Iter_{iter}_question_{i}_defense"):
+                if args.defend_method == "conflict":
+                    logger.info("Using conflict query for {}".format(args.model_name))
+                    final_answers, internal_knowledges, stage_two_responses = (
+                        conflict_query_gpt(top_ks, questions, llm)
+                    )
+                    save_outputs(
+                        internal_knowledges, args.log_name, "internal_knowledges"
+                    )
+                    save_outputs(
+                        stage_two_responses, args.log_name, "stage_two_responses"
+                    )
+                elif args.defend_method == "astute":
+                    logger.info("Using astute query for {}".format(args.model_name))
+                    final_answers = astute_query_gpt(top_ks, questions, llm)
+                elif args.defend_method == "instruct":
+                    logger.info(
+                        "Using instructrag query for {}".format(args.model_name)
+                    )
+                    final_answers = instructrag_query_gpt(top_ks, questions, llm)
+                elif args.defend_method == "none":
+                    logger.info("Using llm.query for {}".format(args.model_name))
+                    final_answers = []
+                    for query in progress_bar(
+                        query_prompts, desc="Processing query prompts"
+                    ):
+                        final_answers.append(llm.query(query))
+                else:
+                    raise ValueError(f"Invalid defend method: {args.defend_method}")
 
         asr_count = 0
         corr_count = 0
@@ -500,6 +530,7 @@ def main():
         logger.info(f"Correct Answer Percentage: {correct_percentage:.2f}%")
         logger.info(f"Incorrect Answer Percentage: {absorbed_percentage:.2f}%")
         save_outputs(final_answers, args.log_name, "final_answers")
+    logger.info(f"Total run time for inference, removal and defense: {total_time:.2f}")
 
 
 if __name__ == "__main__":

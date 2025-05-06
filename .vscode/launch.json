@@ -23,8 +23,8 @@
                 "--score_function=dot",
                 "--adv_a_position=end",
                 "--eval_model_code=contriever",
-                // "--log_defense_stats",
-                "--llm_flag"
+                "--log_defense_stats",
+                // "--llm_flag"
             ]
         }
     ]
