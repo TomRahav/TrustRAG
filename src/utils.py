@@ -279,40 +279,29 @@ def progress_bar(iterable=None, desc=None, total=None, **kwargs):
     return LoguruProgress(iterable=iterable, desc=desc, total=total, **kwargs)
 
 
-def get_tokenized_sentence_sliced(tokenized, i, slice_order, trigger_len=0):
-    input_ids = tokenized["input_ids"]
-    token_type_ids = tokenized["token_type_ids"]
-    attention_mask = tokenized["attention_mask"]
-    # Identify the length of the valid tokens (excluding padding)
-    valid_token_count = attention_mask.sum(dim=1).item()
+def get_tokenized_sentence_sliced(tokenized, i, slice_order):
+    keys = ["input_ids", "token_type_ids", "attention_mask"]
+    tensors = {k: tokenized[k] for k in keys}
 
-    # Ensure we only truncate from the valid tokens
-    if valid_token_count > i:
-        eos = input_ids[:, valid_token_count - 1 : valid_token_count]
-        info_len = valid_token_count - trigger_len
-        info_input_ids = input_ids[:, :info_len]
-        # Truncate valid tokens
-        if slice_order == "end":
-            truncated_input_ids = input_ids[:, : valid_token_count - i - 1]
-            truncated_input_ids = torch.cat((truncated_input_ids, eos), dim=1)
-        elif slice_order == "start":
-            truncated_trigger = input_ids[:, info_len + i :]
-            truncated_input_ids = torch.cat((info_input_ids, truncated_trigger), dim=1)
-        elif slice_order == "shuffle":
-            shuffeled_trigger = input_ids[:, info_len + i :]
-            # Shuffle along the last dimension (columns) for each row
-            indices = torch.stack(
-                [
-                    torch.randperm(shuffeled_trigger.shape[1])
-                    for _ in range(shuffeled_trigger.shape[0])
-                ]
-            )
-            shuffled_input_ids = torch.gather(input_ids, dim=1, index=indices)
-            truncated_input_ids = torch.cat(
-                (info_input_ids, shuffled_input_ids, eos), dim=1
-            )
-    else:
+    valid_token_count = tokenized["attention_mask"].sum(dim=1)
+    if valid_token_count - 2 <= i:
         print(
             "Valid token count is less than the index to truncate.\nReturning original input."
         )
-    return truncated_input_ids
+        return tuple(tensors[k] for k in keys)
+
+    eos = {
+        k: v[:, valid_token_count - 1 : valid_token_count] for k, v in tensors.items()
+    }
+    sos = {k: v[:, :1] for k, v in tensors.items()}
+    if slice_order == "end":
+        main = {k: v[:, : valid_token_count - i - 1] for k, v in tensors.items()}
+        out = {k: torch.cat((main[k], eos[k]), dim=1) for k in keys}
+
+    elif slice_order == "start":
+        main = {k: v[:, i:] for k, v in tensors.items()}
+        out = {k: torch.cat((sos[k], main[k]), dim=1) for k in keys}
+    else:
+        raise ValueError(f"Unsupported slice_order: {slice_order}")
+
+    return out

@@ -269,10 +269,15 @@ def main():
                         for i in range(len(top_k_embedded)):
                             current_embedded = top_k_embedded[i].unsqueeze(0)
                             all_truncated_embeddings = current_embedded
-                            all_truncated_tokens = []
-                            for j in range(1, 20):
+                            all_truncated_tokens = [
+                                {
+                                    key: value[i].unsqueeze(0)
+                                    for key, value in top_k_tokenized.items()
+                                }
+                            ]
+                            for j in range(1, 15):
                                 current_tokenized_truncated = {
-                                    key: value[i]
+                                    key: value[i].unsqueeze(0)
                                     for key, value in top_k_tokenized.items()
                                 }
                                 current_tokenized_truncated = (
@@ -282,10 +287,6 @@ def main():
                                         args.adv_a_position,
                                     )
                                 )
-                                current_tokenized_truncated = {
-                                    key: value.unsqueeze(0)
-                                    for key, value in top_k_tokenized.items()
-                                }
                                 all_truncated_tokens.append(current_tokenized_truncated)
                                 current_embedded_truncated = get_emb(
                                     c_model, current_tokenized_truncated
@@ -434,7 +435,7 @@ def main():
                 tp=1,
                 session_len=16084,
             )
-            sampling_params = GenerationConfig(temperature=0.1, max_new_tokens=1024)
+            sampling_params = GenerationConfig(temperature=0.01, max_new_tokens=1024)
             llm = pipeline(args.model_name, backend_config)
             if args.defend_method == "conflict":
                 final_answers, internal_knowledges, stage_two_responses = (
