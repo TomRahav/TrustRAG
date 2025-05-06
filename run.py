@@ -45,7 +45,7 @@ def run(test_params):
 
 
 def get_log_name(test_params):
-    log_name = f"{test_params['eval_dataset']}-{test_params['eval_model_code']}-{test_params['model_name']}-Top{test_params['top_k']}--M{test_params['M']}x{test_params['repeat_times']}"
+    log_name = f"{test_params['eval_dataset']}-{test_params['eval_model_code']}-Top{test_params['top_k']}--M{test_params['M']}x{test_params['repeat_times']}"
     if test_params["attack_method"] is not None:
         log_name += f"-adv-{test_params['attack_method']}"
     if test_params["removal_method"] is not None:
@@ -53,6 +53,8 @@ def get_log_name(test_params):
     if test_params["defend_method"] is not None:
         log_name += f"-defend-{test_params['defend_method']}"
     log_name += f"-{test_params['score_function']}-{test_params['adv_per_query']}-{test_params['top_k']}"
+    if test_params["model_name"] is not None:
+        log_name += f"-{test_params["model_name"]}"
     if test_params["note"] is not None:
         log_name = test_params["note"]
     return log_name
@@ -71,20 +73,21 @@ test_params = {
     "removal_method": "none",  # ['kmeans', 'kmeans_ngram', 'none']
     "adv_per_query": 3,  # poison rate = adv_per_query / top_k
     "score_function": "dot",
-    "repeat_times": 10,
-    "M": 10,  # number of queries
+    "repeat_times": 1,
+    "M": 1,  # number of queries
     "seed": 12,
+    "llm_flag": True,
+    "adv_a_position": "end",
     "note": None,
 }
 
 
-for dataset in ["hotpotqa", "nq", "msmarco"]:
+for dataset in ["hotpotqa"]:
     for model in ["mistralai/Mistral-Nemo-Instruct-2407"]:
-        for number_of_adv in [1, 2, 3, 4, 5]:
+        for number_of_adv in [1]:
             test_params["eval_dataset"] = dataset
             test_params["adv_per_query"] = number_of_adv
             test_params["model_name"] = model
             test_params["attack_method"] = "hotflip"
-            test_params["defend_method"] = "conflict"
-            test_params["removal_method"] = "kmeans_ngram"
+            test_params["removal_method"] = "window"
             run(test_params)

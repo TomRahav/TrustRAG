@@ -277,3 +277,42 @@ def progress_bar(iterable=None, desc=None, total=None, **kwargs):
     logging output or standard tqdm output
     """
     return LoguruProgress(iterable=iterable, desc=desc, total=total, **kwargs)
+
+
+def get_tokenized_sentence_sliced(tokenized, i, slice_order, trigger_len=0):
+    input_ids = tokenized["input_ids"]
+    token_type_ids = tokenized["token_type_ids"]
+    attention_mask = tokenized["attention_mask"]
+    # Identify the length of the valid tokens (excluding padding)
+    valid_token_count = attention_mask.sum(dim=1).item()
+
+    # Ensure we only truncate from the valid tokens
+    if valid_token_count > i:
+        eos = input_ids[:, valid_token_count - 1 : valid_token_count]
+        info_len = valid_token_count - trigger_len
+        info_input_ids = input_ids[:, :info_len]
+        # Truncate valid tokens
+        if slice_order == "end":
+            truncated_input_ids = input_ids[:, : valid_token_count - i - 1]
+            truncated_input_ids = torch.cat((truncated_input_ids, eos), dim=1)
+        elif slice_order == "start":
+            truncated_trigger = input_ids[:, info_len + i :]
+            truncated_input_ids = torch.cat((info_input_ids, truncated_trigger), dim=1)
+        elif slice_order == "shuffle":
+            shuffeled_trigger = input_ids[:, info_len + i :]
+            # Shuffle along the last dimension (columns) for each row
+            indices = torch.stack(
+                [
+                    torch.randperm(shuffeled_trigger.shape[1])
+                    for _ in range(shuffeled_trigger.shape[0])
+                ]
+            )
+            shuffled_input_ids = torch.gather(input_ids, dim=1, index=indices)
+            truncated_input_ids = torch.cat(
+                (info_input_ids, shuffled_input_ids, eos), dim=1
+            )
+    else:
+        print(
+            "Valid token count is less than the index to truncate.\nReturning original input."
+        )
+    return truncated_input_ids

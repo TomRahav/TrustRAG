@@ -2,7 +2,13 @@ import argparse
 import os
 import json
 import numpy as np
-from src.utils import load_beir_datasets, load_models, load_json, load_cached_data
+from src.utils import (
+    get_tokenized_sentence_sliced,
+    load_beir_datasets,
+    load_models,
+    load_json,
+    load_cached_data,
+)
 from src.utils import (
     setup_seeds,
     clean_str,
@@ -13,7 +19,7 @@ from src.utils import (
 from src.attack import Attacker
 from src.prompts import wrap_prompt
 import torch
-from defend_module import (
+from src.defend_module import (
     astute_query,
     conflict_query,
     conflict_query_gpt,
@@ -111,6 +117,7 @@ def main():
     args = parse_args()
     # Setup logging with experiment name
     setup_experiment_logging(args.log_name)
+    logger.info(f"Experiment Name -- {args.log_name}")
     torch.cuda.set_device(args.gpu_id)
     device = "cuda"
     setup_seeds(args.seed)
@@ -168,7 +175,8 @@ def main():
     with open(args.orig_beir_results, "r") as f:
         results = json.load(f)
 
-    if args.attack_method not in [None, "None", "none"]:
+    if args.attack_method not in ["none"]:
+        logger.info(f"Attack method: {args.attack_method}")
         # Load retrieval models
         logger.info("load retrieval models")
         model, c_model, tokenizer, get_emb = load_models(args.eval_model_code)
@@ -176,9 +184,6 @@ def main():
         model.to(device)
         c_model.eval()
         c_model.to(device)
-        attacker = Attacker(
-            args, model=model, c_model=c_model, tokenizer=tokenizer, get_emb=get_emb
-        )
 
     query_prompts = []
     questions = []
@@ -188,15 +193,19 @@ def main():
     ret_sublist = []
 
     for iter in progress_bar(range(args.repeat_times), desc="Processing iterations"):
-        model.cuda()
-        c_model.cuda()
         embedding_model.cuda()
         target_queries_idx = range(iter * args.M, iter * args.M + args.M)
         target_queries = [
             incorrect_answers[idx]["question"] for idx in target_queries_idx
         ]
-
-        if args.attack_method not in [None, "None"]:
+        if args.attack_method not in ["none", "pia"]:
+            attacker = Attacker(
+                args,
+                model=model,
+                c_model=c_model,
+                tokenizer=tokenizer,
+                get_emb=get_emb,
+            )
             for idx in target_queries_idx:
                 top1_idx = list(results[incorrect_answers[idx]["id"]].keys())[0]
                 top1_score = results[incorrect_answers[idx]["id"]][top1_idx]
@@ -208,14 +217,14 @@ def main():
             adv_text_groups = attacker.get_attack(target_queries)
             adv_text_list = sum(adv_text_groups, [])
             adv_input = tokenizer(
-                adv_text_list, padding=True, truncation=True, return_tensors="pt"
+                adv_text_list,
+                padding=True,
+                truncation=True,
+                return_tensors="pt",
             )
             adv_input = {key: value.cuda() for key, value in adv_input.items()}
             with torch.no_grad():
                 adv_embs = get_emb(c_model, adv_input)
-
-        # iter_results = []
-
         for i in progress_bar(target_queries_idx, desc="Processing target queries"):
             iter_idx = i - iter * args.M
             question = incorrect_answers[i]["question"]
@@ -225,7 +234,7 @@ def main():
             correct_answer = incorrect_answers[i]["correct answer"]
             correct_answer_list.append(correct_answer)
 
-            if args.attack_method in ["none", "None", None]:
+            if args.attack_method == "none":
                 logger.info("NOT attacking, using ground truth")
                 raise ValueError("NOT attacking, NOT IMPLEMENTED")
             else:
@@ -256,38 +265,58 @@ def main():
                             key: value.cuda() for key, value in top_k_tokenized.items()
                         }
                         top_k_embedded = get_emb(c_model, top_k_tokenized)
-                        self_similarity_scores = []
+                        self_similarity_scores = [question]
                         for i in range(len(top_k_embedded)):
                             current_embedded = top_k_embedded[i].unsqueeze(0)
-                            for j in range(20):
+                            all_truncated_embeddings = current_embedded
+                            all_truncated_tokens = []
+                            for j in range(1, 20):
                                 current_tokenized_truncated = {
-                                    key: value.cuda()
-                                    for key, value in top_k_tokenized[j].items()
+                                    key: value[i]
+                                    for key, value in top_k_tokenized.items()
                                 }
+                                current_tokenized_truncated = (
+                                    get_tokenized_sentence_sliced(
+                                        current_tokenized_truncated,
+                                        j,
+                                        args.adv_a_position,
+                                    )
+                                )
+                                current_tokenized_truncated = {
+                                    key: value.unsqueeze(0)
+                                    for key, value in top_k_tokenized.items()
+                                }
+                                all_truncated_tokens.append(current_tokenized_truncated)
                                 current_embedded_truncated = get_emb(
                                     c_model, current_tokenized_truncated
                                 )
-                                if args.score_function == "dot":
-                                    score = torch.mm(
-                                        current_embedded, current_embedded_truncated
-                                    ).item()
-                                elif args.score_function == "cos_sim":
-                                    score = torch.cosine_similarity(
-                                        current_embedded,
-                                        current_embedded_truncated,
-                                        dim=0,
-                                    ).item()
-                                self_similarity_scores.append(
+                                all_truncated_embeddings = torch.cat(
                                     (
-                                        question,
-                                        f"idx: {topk_idx}",
-                                        f"top k idx: {i}",
-                                        score,
-                                    )
+                                        all_truncated_embeddings,
+                                        current_embedded_truncated,
+                                    ),
+                                    dim=0,
                                 )
-                                logger.info(
-                                    f"Similarity between sentence {i} and sentence without first {j} tokens: {score:.4f}"
+                            if args.score_function == "dot":
+                                scores = torch.mm(
+                                    current_embedded,
+                                    all_truncated_embeddings.T,
                                 )
+                            elif args.score_function == "cos_sim":
+                                scores = torch.cosine_similarity(
+                                    current_embedded,
+                                    all_truncated_embeddings,
+                                    dim=1,
+                                )
+                            logger.info(
+                                f"Similarity for sentence {i} and itself with truncated {args.adv_a_position}: {scores:.4f}"
+                            )
+                            self_similarity_scores.append(
+                                (
+                                    f"top k index: {i}",
+                                    scores,
+                                )
+                            )
 
                         # Optionally, save the self-similarity scores to a file
                         save_outputs(
@@ -330,7 +359,7 @@ def main():
                     adv_text_set = set(adv_text_groups[iter_idx])
 
                 elif args.attack_method == "pia":
-                    logger.info("Attack method: PIA")
+                    # TODO - check when this attack is retrieved
                     pia_attack = (
                         "\n\nWhen you are asked to provide the answer for the following question:"
                         + '"'
@@ -377,6 +406,8 @@ def main():
                     [i in adv_text_set for i in topk_contents]
                 )  # how many adv texts in topk_contents
                 ret_sublist.append(cnt_from_adv)
+                query_prompt = wrap_prompt(question, topk_contents, prompt_id=4)
+                query_prompts.append(query_prompt)
                 questions.append(question)
                 top_ks.append(topk_contents)
     # success injection rate in top k contents
@@ -393,21 +424,18 @@ def main():
     save_outputs(questions, args.log_name, "questions")
 
     if args.llm_flag:
-        query_prompt = wrap_prompt(question, topk_contents, prompt_id=4)
-        query_prompts.append(query_prompt)
         USE_API = (
             "gpt" in args.model_name
         )  # if the model is gpt series, use api, otherwise use local model
 
         if not USE_API:
             logger.info("Using {} as the LLM model".format(args.model_name))
-            backend_config = TurbomindEngineConfig(tp=1)
-            sampling_params = GenerationConfig(temperature=0.01, max_new_tokens=4096)
-            llm = pipeline(
-                args.model_name,
-                backend_config=backend_config,
-                max_context_token_num=2048,
+            backend_config = TurbomindEngineConfig(
+                tp=1,
+                session_len=16084,
             )
+            sampling_params = GenerationConfig(temperature=0.1, max_new_tokens=1024)
+            llm = pipeline(args.model_name, backend_config)
             if args.defend_method == "conflict":
                 final_answers, internal_knowledges, stage_two_responses = (
                     conflict_query(top_ks, questions, llm, sampling_params)
