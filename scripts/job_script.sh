@@ -9,7 +9,8 @@
 #SBATCH --mail-type=NONE                # Send email on all events
 
 # Activate conda environment
-conda init
+source .env
+source ~/miniconda3/etc/profile.d/conda.sh
 conda activate trustrag
 
 # Set constant parameters
