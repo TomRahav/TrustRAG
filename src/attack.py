@@ -184,7 +184,7 @@ class Attacker:
 
                     token_to_flip = random.randrange(len(adv_a))
                     if self.adv_a_position == "end":
-                        token_to_flip + len(adv_b)
+                        token_to_flip += len(adv_b)
                     candidates = hotflip_attack(
                         grad[token_to_flip],
                         embeddings.weight,

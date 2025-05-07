@@ -286,9 +286,9 @@ def get_tokenized_sentence_sliced(tokenized, i, slice_order):
     valid_token_count = tokenized["attention_mask"].sum(dim=1)
     if valid_token_count - 2 <= i:
         print(
-            "Valid token count is less than the index to truncate.\nReturning original input."
+            f"Valid token count {valid_token_count} is less than the number of indexes {i} to truncate.\nReturning original input."
         )
-        return tuple(tensors[k] for k in keys)
+        return tensors
 
     eos = {
         k: v[:, valid_token_count - 1 : valid_token_count] for k, v in tensors.items()
