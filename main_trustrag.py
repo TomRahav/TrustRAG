@@ -415,7 +415,6 @@ def main():
                 if (
                     args.removal_method in ["drift", "kmeans", "kmeans_ngram"]
                 ) and args.top_k != 1:
-                    logger.info("Using removal method: {}".format(args.removal_method))
                     with timed(f"Iter_{iter}_question_{i}_removal"):
                         if args.removal_method == "drift":
                             print("waiting:")
@@ -437,8 +436,6 @@ def main():
                                 adv_text_set,
                                 "ngram" in args.removal_method,
                             )
-                else:
-                    logger.info("Using no removal method")
 
                 cnt_from_adv = sum(
                     [i in adv_text_set for i in topk_contents]
