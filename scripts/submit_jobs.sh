@@ -1,12 +1,14 @@
 #!/bin/bash
 
 # Define arrays of parameters 
-datasets=('nq') # 'nq' 'hotpotqa' 'msmarco'
-models_names=("meta-llama/Llama-3.1-8B-Instruct") #  "mistralai/Mistral-Nemo-Instruct-2407" "meta-llama/Llama-3.1-8B-Instruct"
-attacks=("LM_targeted" "hotflip" "pia") # "none" "LM_targeted" "hotflip" "pia"
-removals=('none' 'kmeans' 'kmeans_ngram') # 'none' 'kmeans' 'kmeans_ngram'
-defenses=('none' 'conflict' 'astute' 'instruct') # 'none' 'conflict' 'astute' 'instruct'
+datasets=('nq' 'hotpotqa' 'msmarco') # 'nq' 'hotpotqa' 'msmarco'
+models_names=("mistralai/Mistral-Nemo-Instruct-2407" "meta-llama/Llama-3.1-8B-Instruct") #  "mistralai/Mistral-Nemo-Instruct-2407" "meta-llama/Llama-3.1-8B-Instruct"
+attacks=("LM_targeted" "hotflip") # "none" "LM_targeted" "hotflip" "pia"
+removals=('none') # 'none' 'kmeans' 'kmeans_ngram'
+defenses=('none') # 'none' 'conflict' 'astute' 'instruct'
 scores=('dot') # 'dot' 'cos_sim'
+positions=('start' 'end') # 'start' 'end'
+
 
 index=1  # Initialize counter
 
@@ -17,11 +19,13 @@ for dataset in "${datasets[@]}"; do
       for removal in "${removals[@]}"; do
         for defense in "${defenses[@]}"; do
           for score in "${scores[@]}"; do
-            echo $index
-            # Submit the job with the current set of parameters
-            sbatch --export=DATASET="$dataset",MODEL_NAME="$model_name",ATTACK="$attack",REMOVAL="$removal",DEFENSE="$defense",SCORE="$score" scripts/job_script.sh
-            ((index++))  # Increment counter
-            sleep 1  # Brief pause to be kind to the scheduler
+            for position in "${positions[@]}"; do
+              echo $index
+              # Submit the job with the current set of parameters
+              sbatch --export=DATASET="$dataset",MODEL_NAME="$model_name",ATTACK="$attack",REMOVAL="$removal",DEFENSE="$defense",SCORE="$score",ADV_A_POSITION="$position" scripts/job_script.sh
+              ((index++))  # Increment counter
+              sleep 1  # Brief pause to be kind to the scheduler
+            done
           done
         done
       done

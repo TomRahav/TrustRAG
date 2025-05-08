@@ -87,7 +87,11 @@ class Attacker:
                 id = target_queries[i]["id"]
                 adv_texts_b = self.all_adv_texts[id]["adv_texts"][: self.adv_per_query]
                 adv_text_a = question + "."
-                adv_texts = [adv_text_a + i for i in adv_texts_b]
+                # 🛠️ Here we choose order based on adv_a_position
+                if self.adv_a_position == "start":
+                    adv_texts = [adv_text_a + i for i in adv_texts_b]
+                elif self.adv_a_position == "end":
+                    adv_texts = [i + adv_text_a for i in adv_texts_b]
                 adv_text_groups.append(adv_texts)
         elif self.attack_method == "hotflip":
             adv_text_groups = self.hotflip(target_queries)

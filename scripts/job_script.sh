@@ -26,6 +26,7 @@ ATTACK="${ATTACK:-hotflip}"    # ['none', 'LM_targeted', 'hotflip', 'pia']
 DEFENSE="${DEFENSE:-none}"       # ['none', 'conflict', 'astute', 'instruct']
 REMOVAL="${REMOVAL:-none}"          # ['none', 'kmeans', 'kmeans_ngram']
 SCORE="${SCORE:-dot}"
+ADV_A_POSITION="${ADV_A_POSITION:-end}" # ['start', 'end']
 
 repeat_times=10
 M=10                            # number of queries
@@ -33,14 +34,18 @@ eval_model_code="contriever"
 split="test"
 top_k=5
 adv_per_query=3                # poison rate = adv_per_query / top_k
-adv_a_position="end"
+log_defense_stats=true
+log_defense_stats_arg=""
+if $log_defense_stats; then
+    log_defense_stats_arg="--log_defense_stats"
+fi
 llm_flag=true
 llm_arg=""
 if $llm_flag; then
     llm_arg="--llm_flag"
 fi
 
-log_name="dataset_${DATASET}-retriver_${eval_model_code}-model_${llm_flag}_${MODEL_NAME}-M${M}xRepeat${repeat_times}-attack_${ATTACK}-removal_${REMOVAL}-defend_${DEFENSE}-${SCORE}-adv_per_query${adv_per_query}-Top_${top_k}-Seed_${seed}"
+log_name="dataset_${DATASET}-retriver_${eval_model_code}-model_${llm_flag}_${MODEL_NAME}-M${M}xRepeat${repeat_times}-attack_${ATTACK}-removal_${REMOVAL}-defend_${DEFENSE}-${SCORE}-adv_per_query${adv_per_query}-adv_a_position_${ADV_A_POSITION}-Top_${top_k}-Seed_${seed}-mine_${log_defense_stats_arg}"
 # Run the Python script with the parameters passed from the environment
 python3 -u main_trustrag.py \
         --eval_dataset "$DATASET" \
@@ -49,6 +54,7 @@ python3 -u main_trustrag.py \
         --defend_method "$DEFENSE" \
         --removal_method "$REMOVAL" \
         --score_function "$SCORE" \
+        --adv_a_position "$ADV_A_POSITION" \
         --eval_model_code "$eval_model_code" \
         --split "$split" \
         --query_results_dir "$query_results_dir" \
@@ -59,5 +65,6 @@ python3 -u main_trustrag.py \
         --M "$M" \
         --seed "$seed" \
         --log_name "$log_name" \
-        $llm_arg
+        $llm_arg \
+        $log_defense_stats_arg
 

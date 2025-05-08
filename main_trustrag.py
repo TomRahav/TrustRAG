@@ -205,10 +205,10 @@ def main():
     incorrect_answer_list = []
     correct_answer_list = []
     ret_sublist = []
-
+    adv_text_list = []
     for iter in progress_bar(range(args.repeat_times), desc="Processing iterations"):
         embedding_model.cuda()
-        target_queries_idx = range(iter * args.M, iter * args.M + args.M)
+        target_queries_idx = range(iter * args.M, (iter + 1) * args.M)
         target_queries = [
             incorrect_answers[idx]["question"] for idx in target_queries_idx
         ]
@@ -262,79 +262,91 @@ def main():
                     }
                     for idx in topk_idx
                 ]  # 获取“ground truth”的文档score和text
-
+                top_k_adv_text = [
+                    result["context"] for result in topk_results
+                ] + adv_text_groups[iter_idx]
+                masked_scores = np.ones_like(top_k_adv_text)
                 if args.log_defense_stats:
                     if len(topk_results) > 1:
                         logger.info(
                             "Calculating self-similarity scores for clean topk_results..."
                         )
-                        top_k_text = [result["context"] for result in topk_results]
-                        top_k_tokenized = tokenizer(
-                            top_k_text,
-                            padding=True,
-                            truncation=True,
-                            return_tensors="pt",
-                        )
-                        top_k_tokenized = {
-                            key: value.cuda() for key, value in top_k_tokenized.items()
-                        }
-                        top_k_embedded = get_emb(c_model, top_k_tokenized)
-                        self_similarity_scores = [question]
-                        for i in range(len(top_k_embedded)):
-                            current_embedded = top_k_embedded[i].unsqueeze(0)
-                            all_truncated_embeddings = current_embedded
-                            all_truncated_tokens = [
-                                {
-                                    key: value[i].unsqueeze(0)
-                                    for key, value in top_k_tokenized.items()
-                                }
-                            ]
-                            for j in range(1, 15):
-                                current_tokenized_truncated = {
-                                    key: value[i].unsqueeze(0)
-                                    for key, value in top_k_tokenized.items()
-                                }
-                                current_tokenized_truncated = (
-                                    get_tokenized_sentence_sliced(
-                                        current_tokenized_truncated,
-                                        j,
-                                        args.adv_a_position,
+                        with timed(f"Iter_{iter}_question_{i}_my_removal"):
+                            top_k_adv_tokenized = tokenizer(
+                                top_k_adv_text,
+                                padding=True,
+                                truncation=True,
+                                return_tensors="pt",
+                            )
+                            top_k_adv_tokenized = {
+                                key: value.cuda()
+                                for key, value in top_k_adv_tokenized.items()
+                            }
+                            top_k_adv_embedded = get_emb(c_model, top_k_adv_tokenized)
+                            self_similarity_scores = [question]
+                            all_scores = []
+                            for i in range(len(top_k_adv_embedded)):
+                                current_embedded = top_k_adv_embedded[i].unsqueeze(0)
+                                all_truncated_embeddings = current_embedded
+                                all_truncated_tokens = [
+                                    {
+                                        key: value[i].unsqueeze(0)
+                                        for key, value in top_k_adv_tokenized.items()
+                                    }
+                                ]
+                                for j in range(1, 15):
+                                    current_tokenized_truncated = {
+                                        key: value[i].unsqueeze(0)
+                                        for key, value in top_k_adv_tokenized.items()
+                                    }
+                                    current_tokenized_truncated = (
+                                        get_tokenized_sentence_sliced(
+                                            current_tokenized_truncated,
+                                            j,
+                                            args.adv_a_position,
+                                        )
+                                    )
+                                    all_truncated_tokens.append(
+                                        current_tokenized_truncated
+                                    )
+                                    current_embedded_truncated = get_emb(
+                                        c_model, current_tokenized_truncated
+                                    )
+                                    all_truncated_embeddings = torch.cat(
+                                        (
+                                            all_truncated_embeddings,
+                                            current_embedded_truncated,
+                                        ),
+                                        dim=0,
+                                    )
+                                if args.score_function == "dot":
+                                    scores = torch.mm(
+                                        current_embedded,
+                                        all_truncated_embeddings.T,
+                                    )
+                                elif args.score_function == "cos_sim":
+                                    scores = torch.cosine_similarity(
+                                        current_embedded,
+                                        all_truncated_embeddings,
+                                        dim=1,
+                                    )
+                                scores = scores.cpu().detach().numpy().round(4)
+                                all_scores.append(scores)
+                                logger.info(
+                                    f"Similarity for sentence {i+1} and itself with truncated {args.adv_a_position}: {scores}"
+                                )
+                                self_similarity_scores.append(
+                                    (
+                                        f"top k index: {i+1}",
+                                        scores,
                                     )
                                 )
-                                all_truncated_tokens.append(current_tokenized_truncated)
-                                current_embedded_truncated = get_emb(
-                                    c_model, current_tokenized_truncated
-                                )
-                                all_truncated_embeddings = torch.cat(
-                                    (
-                                        all_truncated_embeddings,
-                                        current_embedded_truncated,
-                                    ),
-                                    dim=0,
-                                )
-                            if args.score_function == "dot":
-                                scores = torch.mm(
-                                    current_embedded,
-                                    all_truncated_embeddings.T,
-                                )
-                            elif args.score_function == "cos_sim":
-                                scores = torch.cosine_similarity(
-                                    current_embedded,
-                                    all_truncated_embeddings,
-                                    dim=1,
-                                )
-                            scores = scores.cpu().detach().numpy().round(4)
-                            logger.info(
-                                f"Similarity for sentence {i} and itself with truncated {args.adv_a_position}: {scores}"
+                            all_scores = np.vstack(all_scores)
+                            diff_scores = np.max(all_scores, axis=1) - np.min(
+                                all_scores, axis=1
                             )
-                            self_similarity_scores.append(
-                                (
-                                    f"top k index: {i}",
-                                    scores,
-                                )
-                            )
-
-                        # Optionally, save the self-similarity scores to a file
+                            masked_scores = np.where(diff_scores > 0.7, 0, 1)
+                            # Optionally, save the self-similarity scores to a file
                         save_outputs(
                             self_similarity_scores,
                             args.log_name,
@@ -353,8 +365,10 @@ def main():
                     }
                     with torch.no_grad():
                         query_emb = get_emb(model, query_input)
-                        for j in range(len(adv_text_list)):
-                            adv_emb = adv_embs[j, :].unsqueeze(0)
+                        for j in range(args.adv_per_query):
+                            adv_emb = adv_embs[
+                                args.adv_per_query * iter_idx + j, :
+                            ].unsqueeze(0)
                             if args.score_function == "dot":
                                 adv_sim = torch.mm(adv_emb, query_emb.T).cpu().item()
                             elif args.score_function == "cos_sim":
@@ -364,13 +378,17 @@ def main():
                                     .item()
                                 )
                             topk_results.append(
-                                {"score": adv_sim, "context": adv_text_list[j]}
-                            )  # the length of topk_results is args.top_k + len(adv_text_list)
+                                {
+                                    "score": adv_sim,
+                                    "context": adv_text_groups[iter_idx][j],
+                                }
+                            )  # the length of topk_results is args.top_k + len(adv_text_groups[iter_idx])
+                    topk_results = [t for t, m in zip(topk_results, masked_scores) if m]
                     topk_results = sorted(
                         topk_results, key=lambda x: float(x["score"]), reverse=True
                     )  # Sort topk_results by score in descending order
                     topk_contents = [
-                        topk_results[j]["context"] for j in range(args.top_k)
+                        topk_results[j]["context"] for j in range(len(topk_results))
                     ]  # only keep the topk contents
                     adv_text_set = set(adv_text_groups[iter_idx])
 
@@ -395,27 +413,30 @@ def main():
                     adv_text_set = [pia_attack]
 
                 if (
-                    args.removal_method in ["kmeans", "kmeans_ngram"]
+                    args.removal_method in ["drift", "kmeans", "kmeans_ngram"]
                 ) and args.top_k != 1:
                     logger.info("Using removal method: {}".format(args.removal_method))
                     with timed(f"Iter_{iter}_question_{i}_removal"):
-                        embedding_topk = [
-                            list(
-                                get_sentence_embedding(
-                                    sentence, embedding_tokenizer, embedding_model
+                        if args.removal_method == "drift":
+                            print("waiting:")
+                        else:
+                            embedding_topk = [
+                                list(
+                                    get_sentence_embedding(
+                                        sentence, embedding_tokenizer, embedding_model
+                                    )
+                                    .cpu()
+                                    .numpy()[0]
                                 )
-                                .cpu()
-                                .numpy()[0]
+                                for sentence in topk_contents
+                            ]
+                            embedding_topk = np.array(embedding_topk)
+                            embedding_topk, topk_contents = k_mean_filtering(
+                                embedding_topk,
+                                topk_contents,
+                                adv_text_set,
+                                "ngram" in args.removal_method,
                             )
-                            for sentence in topk_contents
-                        ]
-                        embedding_topk = np.array(embedding_topk)
-                        embedding_topk, topk_contents = k_mean_filtering(
-                            embedding_topk,
-                            topk_contents,
-                            adv_text_set,
-                            "ngram" in args.removal_method,
-                        )
                 else:
                     logger.info("Using no removal method")
 
@@ -453,7 +474,7 @@ def main():
             )
             sampling_params = GenerationConfig(temperature=0.01, max_new_tokens=1024)
             llm = pipeline(args.model_name, backend_config)
-            with timed(f"Iter_{iter}_question_{i}_defense"):
+            with timed("llm_inference_and_defense"):
                 if args.defend_method == "conflict":
                     final_answers, internal_knowledges, stage_two_responses = (
                         conflict_query(top_ks, questions, llm, sampling_params)
@@ -482,7 +503,7 @@ def main():
         else:
             logger.info("Using {} as the LLM model".format(args.model_name))
             llm = GPT(args.model_name)
-            with timed(f"Iter_{iter}_question_{i}_defense"):
+            with timed("llm_inference_and_defense"):
                 if args.defend_method == "conflict":
                     logger.info("Using conflict query for {}".format(args.model_name))
                     final_answers, internal_knowledges, stage_two_responses = (

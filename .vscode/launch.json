@@ -13,15 +13,15 @@
             "args": [
                 "--log_name=test-llama",
                 "--removal_method=none",
-                "--attack_method=hotflip",
+                "--attack_method=LM_targeted",
                 "--defend_method=conflict",
                 "--model_name=meta-llama/Llama-3.1-8B-Instruct",
                 // "--model_name=mistralai/Mistral-Nemo-Instruct-2407",
                 "--M=2",
-                "--repeat_times=2",
+                "--repeat_times=1",
                 "--adv_per_query=3",
                 "--score_function=dot",
-                "--adv_a_position=end",
+                "--adv_a_position=start",
                 "--eval_model_code=contriever",
                 "--log_defense_stats",
                 "--llm_flag"
