@@ -34,7 +34,7 @@ eval_model_code="contriever"
 split="test"
 top_k=5
 adv_per_query=3                # poison rate = adv_per_query / top_k
-log_defense_stats=true
+log_defense_stats=false
 log_defense_stats_arg=""
 if $log_defense_stats; then
     log_defense_stats_arg="--log_defense_stats"

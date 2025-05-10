@@ -2,9 +2,9 @@
 
 # Define arrays of parameters 
 datasets=('nq' 'hotpotqa' 'msmarco') # 'nq' 'hotpotqa' 'msmarco'
-models_names=("mistralai/Mistral-Nemo-Instruct-2407" "meta-llama/Llama-3.1-8B-Instruct") #  "mistralai/Mistral-Nemo-Instruct-2407" "meta-llama/Llama-3.1-8B-Instruct"
-attacks=("LM_targeted" "hotflip") # "none" "LM_targeted" "hotflip" "pia"
-removals=('none') # 'none' 'kmeans' 'kmeans_ngram'
+models_names=("meta-llama/Llama-3.1-8B-Instruct" "mistralai/Mistral-Nemo-Instruct-2407") #  "mistralai/Mistral-Nemo-Instruct-2407" "meta-llama/Llama-3.1-8B-Instruct"
+attacks=("hotflip") # "none" "LM_targeted" "hotflip" "pia"
+removals=('kmeans_ngram') # 'none' 'kmeans' 'kmeans_ngram'
 defenses=('none') # 'none' 'conflict' 'astute' 'instruct'
 scores=('dot') # 'dot' 'cos_sim'
 positions=('start' 'end') # 'start' 'end'
