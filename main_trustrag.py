@@ -1,9 +1,8 @@
 import argparse
 import os
 import json
-import numpy as np
 from src.utils import (
-    get_tokenized_sentence_sliced,
+    cos_similarity,
     load_beir_datasets,
     load_models,
     load_json,
@@ -23,7 +22,7 @@ from src.defend_module import (
     astute_query,
     conflict_query,
     conflict_query_gpt,
-    get_sentence_embedding,
+    drift_filtering,
     instructrag_query,
     instructrag_query_gpt,
     astute_query_gpt,
@@ -105,7 +104,7 @@ def parse_args():
         "--removal_method",
         type=str,
         default="kmeans_ngram",
-        choices=["kmeans", "kmeans_ngram", "none"],
+        choices=["none", "kmeans", "kmeans_ngram", "drift"],
     )
     parser.add_argument(
         "--defend_method",
@@ -118,10 +117,7 @@ def parse_args():
         action="store_true",
     )
     parser.add_argument("--adv_a_position", type=str, default="start")
-    parser.add_argument(
-        "--log_defense_stats",
-        action="store_true",
-    )
+
     args = parser.parse_args()
     logger.info(args)
     return args
@@ -203,11 +199,16 @@ def main():
     query_prompts = []
     questions = []
     top_ks = []
+    sorted_contents = []
     incorrect_answer_list = []
     correct_answer_list = []
-    cnt_from_orig_top_k = 0
-    cnt_from_adv = []
     adv_text_list = []
+
+    total_original_top_k_text_pass_removal = []
+    total_injection_num_pass_removal = []
+    total_original_top_k_text_in_top_k = []
+    total_injection_num_in_top_k = []
+
     for iter in progress_bar(range(args.repeat_times), desc="Processing iterations"):
         target_queries_idx = range(iter * args.M, (iter + 1) * args.M)
         target_queries = [
@@ -253,7 +254,6 @@ def main():
                     : args.top_k
                 ]
             ]
-
             if args.attack_method == "none":
                 logger.info("NOT attacking, using ground truth")
                 raise ValueError("NOT attacking, NOT IMPLEMENTED")
@@ -285,9 +285,7 @@ def main():
                                 adv_sim = torch.mm(adv_emb, query_emb.T).cpu().item()
                             elif args.score_function == "cos_sim":
                                 adv_sim = (
-                                    torch.cosine_similarity(adv_emb, query_emb)
-                                    .cpu()
-                                    .item()
+                                    cos_similarity(adv_emb, query_emb).cpu().item()
                                 )
                             topk_results.append(
                                 {
@@ -322,147 +320,78 @@ def main():
                     ]
                     topk_contents.append(pia_attack)
                     adv_text_set = [pia_attack]
-
+                sorted_contents.append(topk_contents.copy())
                 if (
                     args.removal_method in ["drift", "kmeans", "kmeans_ngram"]
                 ) and args.top_k != 1:
                     with timed(f"Iter_{iter}_question_{i}_removal"):
                         if args.removal_method == "drift":
-                            top_k_adv_text = [
-                                result["context"] for result in topk_results
-                            ] + adv_text_groups[iter_idx]
-                            if len(topk_results) > 1:
-                                logger.info(
-                                    "Calculating self-similarity scores for clean topk_results..."
-                                )
-                                top_k_adv_tokenized = tokenizer(
-                                    top_k_adv_text,
-                                    padding=True,
-                                    truncation=True,
-                                    return_tensors="pt",
-                                )
-                                top_k_adv_tokenized = {
-                                    key: value.cuda()
-                                    for key, value in top_k_adv_tokenized.items()
-                                }
-                                top_k_adv_embedded = get_emb(
-                                    c_model, top_k_adv_tokenized
-                                )
-                                self_similarity_scores = [question]
-                                all_scores = []
-                                for i in range(len(top_k_adv_embedded)):
-                                    current_embedded = top_k_adv_embedded[i].unsqueeze(
-                                        0
-                                    )
-                                    all_truncated_embeddings = current_embedded
-                                    all_truncated_tokens = [
-                                        {
-                                            key: value[i].unsqueeze(0)
-                                            for key, value in top_k_adv_tokenized.items()
-                                        }
-                                    ]
-                                    for j in range(1, 15):
-                                        current_tokenized_truncated = {
-                                            key: value[i].unsqueeze(0)
-                                            for key, value in top_k_adv_tokenized.items()
-                                        }
-                                        current_tokenized_truncated = (
-                                            get_tokenized_sentence_sliced(
-                                                current_tokenized_truncated,
-                                                j,
-                                                args.adv_a_position,
-                                            )
-                                        )
-                                        all_truncated_tokens.append(
-                                            current_tokenized_truncated
-                                        )
-                                        current_embedded_truncated = get_emb(
-                                            c_model, current_tokenized_truncated
-                                        )
-                                        all_truncated_embeddings = torch.cat(
-                                            (
-                                                all_truncated_embeddings,
-                                                current_embedded_truncated,
-                                            ),
-                                            dim=0,
-                                        )
-                                    if args.score_function == "dot":
-                                        scores = torch.mm(
-                                            current_embedded,
-                                            all_truncated_embeddings.T,
-                                        )
-                                    elif args.score_function == "cos_sim":
-                                        scores = torch.cosine_similarity(
-                                            current_embedded,
-                                            all_truncated_embeddings,
-                                            dim=1,
-                                        )
-                                    scores = scores.cpu().detach().numpy().round(4)
-                                    all_scores.append(scores)
-                                    logger.info(
-                                        f"Similarity for sentence {i+1} and itself with truncated {args.adv_a_position}: {scores}"
-                                    )
-                                    self_similarity_scores.append(
-                                        (
-                                            f"top k index: {i+1}",
-                                            scores,
-                                        )
-                                    )
-                                all_scores = np.vstack(all_scores)
-                                diff_scores = np.max(all_scores, axis=1) - np.min(
-                                    all_scores, axis=1
-                                )
-                                masked_scores = np.where(diff_scores > 0.7, 0, 1)
-                                # Optionally, save the self-similarity scores to a file
-                                save_outputs(
-                                    self_similarity_scores,
-                                    args.log_name,
-                                    "self_similarity_scores",
-                                )
-                            else:
-                                logger.info(
-                                    "Not enough topk_results to calculate self-similarity scores."
-                                )
+                            topk_contents = drift_filtering(
+                                args, tokenizer, model, get_emb, question, topk_contents
+                            )
                         else:
-                            embedding_topk = [
-                                list(
-                                    get_sentence_embedding(
-                                        sentence, embedding_tokenizer, embedding_model
-                                    )
-                                    .cpu()
-                                    .numpy()[0]
-                                )
-                                for sentence in topk_contents
-                            ]
-                            embedding_topk = np.array(embedding_topk)
                             topk_contents = k_mean_filtering(
-                                embedding_topk,
+                                embedding_tokenizer,
+                                embedding_model,
                                 topk_contents,
                                 "ngram" in args.removal_method,
                             )
 
-                cnt_from_adv = sum(
-                    [i in adv_text_set for i in topk_contents]
-                )  # how many adv texts in topk_contents
-                cnt_from_original_top_k_text = sum(
-                    [i in original_top_k_text for i in topk_contents]
+                total_injection_num_pass_removal.append(
+                    sum([i in adv_text_set for i in topk_contents])
                 )
-                cnt_from_adv.append(cnt_from_adv)
+                total_original_top_k_text_pass_removal.append(
+                    sum([i in original_top_k_text for i in topk_contents])
+                )
+                topk_contents = topk_contents[: args.top_k]
+                total_injection_num_in_top_k.append(
+                    sum([i in adv_text_set for i in topk_contents])
+                )
+                total_original_top_k_text_in_top_k.append(
+                    sum([i in original_top_k_text for i in topk_contents])
+                )
                 query_prompt = wrap_prompt(question, topk_contents, prompt_id=4)
                 query_prompts.append(query_prompt)
                 questions.append(question)
                 top_ks.append(topk_contents)
+    save_outputs(
+        total_original_top_k_text_pass_removal,
+        args.log_name,
+        "total_original_top_k_text_pass_removal",
+    )
+    save_outputs(
+        total_injection_num_pass_removal,
+        args.log_name,
+        "total_injection_num_pass_removal",
+    )
+    save_outputs(
+        total_original_top_k_text_in_top_k,
+        args.log_name,
+        "total_original_top_k_text_in_top_k",
+    )
+    save_outputs(
+        total_injection_num_in_top_k, args.log_name, "total_injection_num_in_top_k"
+    )
+
+    total_original_top_k_text_pass_removal = sum(total_original_top_k_text_pass_removal)
+    total_injection_num_pass_removal = sum(total_injection_num_pass_removal)
+    total_original_top_k_text_in_top_k = sum(total_original_top_k_text_in_top_k)
+    total_injection_num_in_top_k = sum(total_injection_num_in_top_k)
     total_topk_num = args.M * args.repeat_times * args.top_k
     total_adv_num = args.M * args.repeat_times * args.adv_per_query
-    total_injection_num = sum(
-        cnt_from_adv
-    )  # total number of adv texts in topk contents
     logger.info(f"total_topk_num: {total_topk_num}")
-    logger.info(f"total_injection_num: {total_injection_num}")
+    logger.info(f"total_adv_num: {total_adv_num}")
+    if args.removal_method in ["drift", "kmeans", "kmeans_ngram"]:
+        logger.info(
+            f"False removal rate in true content contents: {(1-total_original_top_k_text_pass_removal/total_topk_num):.2f}%"
+        )
+        logger.info(
+            f"Success removal rate in adv contents: {(1-total_injection_num_pass_removal/total_adv_num):.2f}%"
+        )
     logger.info(
-        f"Success injection rate in top k contents: {total_injection_num/total_topk_num:.2f}"
+        f"Success injection rate in top {args.top_k} contents: {total_injection_num_in_top_k/total_topk_num:.2f}%"
     )
-    logger.info(f"Success removal rate: {total_injection_num/total_topk_num:.2f}")
+    save_outputs(sorted_contents, args.log_name, "sorted_contents")
     save_outputs(top_ks, args.log_name, "top_ks")
     save_outputs(questions, args.log_name, "questions")
 

@@ -1,7 +1,7 @@
 from sentence_transformers import SentenceTransformer
 import torch
 import random
-from src.utils import load_json, progress_bar
+from src.utils import cos_similarity, load_json, progress_bar
 from loguru import logger
 
 
@@ -171,7 +171,7 @@ class Attacker:
                     if self.args.score_function == "dot":
                         sim = torch.mm(p_emb, q_emb.T)
                     elif self.args.score_function == "cos_sim":
-                        sim = torch.cosine_similarity(p_emb, q_emb)
+                        sim = cos_similarity(p_emb, q_emb)
                     else:
                         raise KeyError
 
@@ -212,7 +212,7 @@ class Attacker:
                             if self.args.score_function == "dot":
                                 temp_sim = torch.mm(temp_p_emb, q_emb.T)
                             elif self.args.score_function == "cos_sim":
-                                temp_sim = torch.cosine_similarity(temp_p_emb, q_emb)
+                                temp_sim = cos_similarity(temp_p_emb, q_emb)
                             else:
                                 raise KeyError
                             can_loss = temp_sim.mean()

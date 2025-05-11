@@ -12,20 +12,26 @@
             "console": "integratedTerminal",
             "args": [
                 "--log_name=test-llama",
-                "--removal_method=none",
-                "--attack_method=LM_targeted",
-                "--defend_method=conflict",
-                // "--model_name=meta-llama/Llama-3.1-8B-Instruct",
-                "--model_name=mistralai/Mistral-Nemo-Instruct-2407",
-                "--M=2",
+                "--removal_method=kmeans_ngram",
+                "--attack_method=LM_targeted", // hotflip
+                "--defend_method=none",
+                "--model_name=meta-llama/Llama-3.1-8B-Instruct",
+                // "--model_name=mistralai/Mistral-Nemo-Instruct-2407",
+                "--M=10",
                 "--repeat_times=1",
                 "--adv_per_query=3",
                 "--score_function=dot",
                 "--adv_a_position=start",
                 "--eval_model_code=contriever",
-                "--log_defense_stats",
                 "--llm_flag"
             ]
+        },
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
         }
     ]
 }

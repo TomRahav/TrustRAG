@@ -1,8 +1,7 @@
 import logging
-import pathlib, os
+import os
 import json
 import torch
-import sys
 import transformers
 
 from beir import util, LoggingHandler
@@ -10,12 +9,10 @@ from beir.retrieval import models
 from beir.datasets.data_loader import GenericDataLoader
 from beir.retrieval.evaluation import EvaluateRetrieval
 from beir.retrieval.search.dense import DenseRetrievalExactSearch as DRES
-from beir.retrieval.models import DPR
-
 
 from src.contriever_src.contriever import Contriever
 from src.contriever_src.beir_utils import DenseEncoderModel
-from src.utils import load_json
+from src.utils import model_code_to_cmodel_name
 
 import argparse
 
@@ -45,8 +42,6 @@ parser.add_argument(
 parser.add_argument("--max_length", type=int, default=128)
 
 args = parser.parse_args()
-
-from src.utils import model_code_to_cmodel_name, model_code_to_qmodel_name
 
 
 def compress(results):
@@ -116,14 +111,14 @@ if "contriever" in args.model_code:
     )
 elif "dpr" in args.model_code:
     model = DRES(
-        DPR(
+        models.SentenceBERT(
             (
-                model_code_to_qmodel_name[args.model_code],
-                model_code_to_cmodel_name[args.model_code],
-            )
-        ),
-        batch_size=args.per_gpu_batch_size,
-        corpus_chunk_size=5000,
+                "facebook-dpr-question_encoder-multiset-base",
+                "facebook-dpr-ctx_encoder-multiset-base",
+                " [SEP] ",
+            ),
+            batch_size=128,
+        )
     )
 elif "ance" in args.model_code:
     model = DRES(

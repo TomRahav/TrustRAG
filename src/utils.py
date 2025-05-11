@@ -7,6 +7,7 @@ import numpy as np
 import pickle
 import random
 import torch
+import torch.nn.functional as F
 from transformers import AutoTokenizer
 
 from sentence_transformers import SentenceTransformer
@@ -27,6 +28,13 @@ model_code_to_cmodel_name = {
     "contriever-msmarco": "facebook/contriever-msmarco",
     "ance": "sentence-transformers/msmarco-roberta-base-ance-firstp",
 }
+
+
+def cos_similarity(a, b):
+    return torch.mm(
+        F.normalize(a, dim=1),
+        F.normalize(b, dim=1).T,
+    )
 
 
 def load_cached_data(cache_file, load_function, *args, **kwargs):
@@ -299,9 +307,47 @@ def get_tokenized_sentence_sliced(tokenized, i, slice_order):
         out = {k: torch.cat((main[k], eos[k]), dim=1) for k in keys}
 
     elif slice_order == "start":
-        main = {k: v[:, i:] for k, v in tensors.items()}
+        main = {k: v[:, i + 1 :] for k, v in tensors.items()}
         out = {k: torch.cat((sos[k], main[k]), dim=1) for k in keys}
     else:
         raise ValueError(f"Unsupported slice_order: {slice_order}")
 
+    return out
+
+
+def get_tokenized_sentence_block_removed(tokenized, block_start: int, block_size: int):
+    """
+    Removes a fixed block of tokens from the tokenized input while preserving the SOS (start-of-sequence) and EOS (end-of-sequence) tokens.
+
+    Args:
+        tokenized (dict): Dictionary containing "input_ids", "token_type_ids", and "attention_mask".
+        block_start (int): Index (exclusive of SOS) at which to start removing tokens.
+        block_size (int): Number of tokens to remove starting from block_start.
+
+    Returns:
+        dict: Modified tokenized input with the block removed.
+    """
+    keys = ["input_ids", "token_type_ids", "attention_mask"]
+    tensors = {k: tokenized[k] for k in keys}
+
+    valid_token_count = tokenized["attention_mask"].sum(dim=1)
+    # Ensure there is room to remove a block between SOS and EOS
+    available_tokens = valid_token_count - 2  # exclude SOS and EOS
+    if block_start >= available_tokens:
+        print(
+            f"block_start {block_start} is beyond available tokens ({available_tokens}). Returning original."
+        )
+        return tensors
+    block_end = min(block_start + block_size, available_tokens)
+
+    sos = {k: v[:, :1] for k, v in tensors.items()}
+    eos = {
+        k: v[:, valid_token_count - 1 : valid_token_count] for k, v in tensors.items()
+    }
+    before = {k: v[:, 1 + 0 : 1 + block_start] for k, v in tensors.items()}  # after SOS
+    after = {
+        k: v[:, 1 + block_end : valid_token_count - 1] for k, v in tensors.items()
+    }  # before EOS
+
+    out = {k: torch.cat([sos[k], before[k], after[k], eos[k]], dim=1) for k in keys}
     return out
