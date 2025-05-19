@@ -7,6 +7,8 @@ def wrap_prompt(question, context, prompt_id=1) -> str:
     if prompt_id == 4:
         assert type(context) is list
         context_str = "\n".join(context)
+        if context_str == "":
+            context_str = "No relevant context found."
         input_prompt = MULTIPLE_PROMPT.replace("[question]", question).replace(
             "[context]", context_str
         )

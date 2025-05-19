@@ -35,8 +35,15 @@ from transformers import AutoTokenizer, AutoModel
 from src.gpt4_model import GPT
 import time
 from contextlib import contextmanager
+from dotenv import load_dotenv
+from huggingface_hub import login
 
 total_time = 0
+
+
+load_dotenv()
+# Method 2: Use huggingface_hub login
+login(token=os.environ["HF_API_KEY"])
 
 
 @contextmanager
@@ -104,7 +111,7 @@ def parse_args():
         "--removal_method",
         type=str,
         default="kmeans_ngram",
-        choices=["none", "kmeans", "kmeans_ngram", "drift"],
+        choices=["none", "kmeans", "kmeans_ngram", "drift", "all"],
     )
     parser.add_argument(
         "--defend_method",
@@ -198,7 +205,12 @@ def main():
 
     query_prompts = []
     questions = []
+    question_ids = []
     top_ks = []
+    adv_passed_removal = {}
+    questions_correct = {}
+    questions_incorrect = {}
+    questions_attack_succeded = {}
     sorted_contents = []
     incorrect_answer_list = []
     correct_answer_list = []
@@ -244,6 +256,7 @@ def main():
         for i in progress_bar(target_queries_idx, desc="Processing target queries"):
             iter_idx = i - iter * args.M
             question = incorrect_answers[i]["question"]
+            question_id = incorrect_answers[i]["id"]
             incorrect_answer = incorrect_answers[i]["incorrect answer"]
             incorrect_answer_list.append(incorrect_answer)
             correct_answer = incorrect_answers[i]["correct answer"]
@@ -255,8 +268,11 @@ def main():
                 ]
             ]
             if args.attack_method == "none":
-                logger.info("NOT attacking, using ground truth")
-                raise ValueError("NOT attacking, NOT IMPLEMENTED")
+                topk_idx = list(results[incorrect_answers[i]["id"]].keys())[
+                    : args.top_k
+                ]
+                topk_contents = [corpus[idx]["text"] for idx in topk_idx]
+                adv_text_set = []
             else:
                 topk_idx = list(results[incorrect_answers[i]["id"]].keys())[
                     : args.top_k
@@ -327,7 +343,13 @@ def main():
                     with timed(f"Iter_{iter}_question_{i}_removal"):
                         if args.removal_method == "drift":
                             topk_contents = drift_filtering(
-                                args, tokenizer, model, get_emb, question, topk_contents
+                                args,
+                                tokenizer,
+                                model,
+                                get_emb,
+                                question,
+                                topk_contents,
+                                args.score_function,
                             )
                         else:
                             topk_contents = k_mean_filtering(
@@ -336,7 +358,9 @@ def main():
                                 topk_contents,
                                 "ngram" in args.removal_method,
                             )
-
+            if args.removal_method == "all":
+                topk_contents = []
+            if topk_contents:
                 total_injection_num_pass_removal.append(
                     sum([i in adv_text_set for i in topk_contents])
                 )
@@ -350,10 +374,19 @@ def main():
                 total_original_top_k_text_in_top_k.append(
                     sum([i in original_top_k_text for i in topk_contents])
                 )
-                query_prompt = wrap_prompt(question, topk_contents, prompt_id=4)
-                query_prompts.append(query_prompt)
-                questions.append(question)
-                top_ks.append(topk_contents)
+                current_adv_passed_removal = [
+                    i for i in topk_contents if i in adv_text_set
+                ]
+                if len(current_adv_passed_removal) > 0:
+                    adv_passed_removal[f"qid_{question_id}"] = [
+                        question
+                    ] + current_adv_passed_removal
+            query_prompt = wrap_prompt(question, topk_contents, prompt_id=4)
+            query_prompts.append(query_prompt)
+            questions.append(question)
+            question_ids.append(question_id)
+            top_ks.append(topk_contents)
+    save_outputs(adv_passed_removal, args.log_name, "adv_passed_removal")
     save_outputs(
         total_original_top_k_text_pass_removal,
         args.log_name,
@@ -474,17 +507,26 @@ def main():
             corr_ans = clean_str(correct_answer_list[iter])
             final_ans = clean_str(final_answers[iter])
             if corr_ans in final_ans:
+                questions_correct[question_ids[iter]] = top_ks[iter]
                 corr_count += 1
-            if (incorr_ans in final_ans) and (corr_ans not in final_ans):
+            elif (incorr_ans in final_ans) and (corr_ans not in final_ans):
+                questions_attack_succeded[question_ids[iter]] = top_ks[iter]
                 asr_count += 1
+            else:
+                questions_incorrect[question_ids[iter]] = top_ks[iter]
         total_questions = len(final_answers)
-
         correct_percentage = (corr_count / total_questions) * 100
         absorbed_percentage = (asr_count / total_questions) * 100
 
         logger.info(f"Correct Answer Percentage: {correct_percentage:.2f}%")
         logger.info(f"Incorrect Answer Percentage: {absorbed_percentage:.2f}%")
         save_outputs(final_answers, args.log_name, "final_answers")
+        save_outputs(questions_correct, args.log_name, "questions_correct")
+        save_outputs(
+            questions_attack_succeded, args.log_name, "questions_attack_succeded"
+        )
+        save_outputs(questions_incorrect, args.log_name, "questions_incorrect")
+
     logger.info(f"Total run time for inference, removal and defense: {total_time:.2f}")
 
 

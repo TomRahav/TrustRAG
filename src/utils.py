@@ -289,7 +289,7 @@ def progress_bar(iterable=None, desc=None, total=None, **kwargs):
 
 def get_tokenized_sentence_sliced(tokenized, i, slice_order):
     keys = ["input_ids", "token_type_ids", "attention_mask"]
-    tensors = {k: tokenized[k] for k in keys}
+    tensors = {k: tokenized[k] for k in tokenized.keys() if k in keys}
 
     valid_token_count = tokenized["attention_mask"].sum(dim=1)
     if valid_token_count - 2 <= i:
@@ -297,18 +297,20 @@ def get_tokenized_sentence_sliced(tokenized, i, slice_order):
             f"Valid token count {valid_token_count} is less than the number of indexes {i} to truncate.\nReturning original input."
         )
         return tensors
-
     eos = {
         k: v[:, valid_token_count - 1 : valid_token_count] for k, v in tensors.items()
     }
     sos = {k: v[:, :1] for k, v in tensors.items()}
     if slice_order == "end":
         main = {k: v[:, : valid_token_count - i - 1] for k, v in tensors.items()}
-        out = {k: torch.cat((main[k], eos[k]), dim=1) for k in keys}
-
+        out = {
+            k: torch.cat((main[k], eos[k]), dim=1) for k in tensors.keys() if k in keys
+        }
     elif slice_order == "start":
         main = {k: v[:, i + 1 :] for k, v in tensors.items()}
-        out = {k: torch.cat((sos[k], main[k]), dim=1) for k in keys}
+        out = {
+            k: torch.cat((sos[k], main[k]), dim=1) for k in tensors.keys() if k in keys
+        }
     else:
         raise ValueError(f"Unsupported slice_order: {slice_order}")
 

@@ -1,0 +1,290 @@
+2025-05-16 14:08:06 | INFO     | __main__:main:130 | Experiment Name -- dataset_nq-retriver_contriever-model_true_mistralai/Mistral-Nemo-Instruct-2407-M10xRepeat10-attack_hotflip-removal_drift-defend_conflict-dot-adv_per_query3-adv_a_position_start-Top_5-Seed_12_no_questions
+2025-05-16 14:08:09 | INFO     | src.utils:load_cached_data:42 | Cache file data_cache/nq_test.pkl exists. Loading data...
+2025-05-16 14:08:12 | INFO     | src.utils:load_cached_data:42 | Cache file data_cache/nq_answers.pkl exists. Loading data...
+2025-05-16 14:08:12 | INFO     | __main__:main:168 | Please evaluate on BEIR first -- contriever on nq
+2025-05-16 14:08:12 | INFO     | __main__:main:172 | Now try to get beir eval results from results/beir_results/...
+2025-05-16 14:08:12 | INFO     | __main__:main:184 | Automatically get beir_resutls from results/beir_results/nq-contriever.json.
+2025-05-16 14:08:13 | INFO     | __main__:main:190 | Attack method: hotflip
+2025-05-16 14:08:13 | INFO     | __main__:main:192 | load retrieval models
+2025-05-16 14:08:14 | INFO     | src.utils:__init__:247 | Starting Processing iterations: 0/10
+2025-05-16 14:08:14 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-16 14:08:14 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-16 14:09:10 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [56.5s elapsed, 0.0 it/s]
+2025-05-16 14:10:05 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [111.1s elapsed, 0.0 it/s]
+2025-05-16 14:10:59 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [165.4s elapsed, 0.0 it/s]
+2025-05-16 14:11:54 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [220.0s elapsed, 0.0 it/s]
+2025-05-16 14:12:48 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [274.5s elapsed, 0.0 it/s]
+2025-05-16 14:13:43 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [329.0s elapsed, 0.0 it/s]
+2025-05-16 14:14:37 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [383.5s elapsed, 0.0 it/s]
+2025-05-16 14:15:32 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [438.0s elapsed, 0.0 it/s]
+2025-05-16 14:16:26 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [492.4s elapsed, 0.0 it/s]
+2025-05-16 14:17:21 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [547.0s elapsed, 0.0 it/s]
+2025-05-16 14:17:21 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-16 14:17:21 | INFO     | __main__:timed:49 | [Iter_0_question_0_removal] took 0.27 seconds
+2025-05-16 14:17:21 | INFO     | __main__:timed:49 | [Iter_0_question_1_removal] took 0.14 seconds
+2025-05-16 14:17:22 | INFO     | __main__:timed:49 | [Iter_0_question_2_removal] took 0.29 seconds
+2025-05-16 14:17:22 | INFO     | __main__:timed:49 | [Iter_0_question_3_removal] took 0.31 seconds
+2025-05-16 14:17:22 | INFO     | src.utils:update:256 | Processing target queries: 4/10 [1.1s elapsed, 3.8 it/s]
+2025-05-16 14:17:22 | INFO     | __main__:timed:49 | [Iter_0_question_4_removal] took 0.24 seconds
+2025-05-16 14:17:22 | INFO     | __main__:timed:49 | [Iter_0_question_5_removal] took 0.32 seconds
+2025-05-16 14:17:23 | INFO     | __main__:timed:49 | [Iter_0_question_6_removal] took 0.25 seconds
+2025-05-16 14:17:23 | INFO     | __main__:timed:49 | [Iter_0_question_7_removal] took 0.30 seconds
+2025-05-16 14:17:23 | INFO     | src.utils:update:256 | Processing target queries: 8/10 [2.2s elapsed, 3.6 it/s]
+2025-05-16 14:17:23 | INFO     | __main__:timed:49 | [Iter_0_question_8_removal] took 0.29 seconds
+2025-05-16 14:17:24 | INFO     | __main__:timed:49 | [Iter_0_question_9_removal] took 0.27 seconds
+2025-05-16 14:17:24 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [2.8s elapsed, 3.6 it/s]
+2025-05-16 14:17:24 | INFO     | src.utils:update:256 | Processing iterations: 1/10 [549.8s elapsed, 0.0 it/s]
+2025-05-16 14:17:24 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-16 14:17:24 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-16 14:18:20 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [56.1s elapsed, 0.0 it/s]
+2025-05-16 14:19:14 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [110.4s elapsed, 0.0 it/s]
+2025-05-16 14:20:08 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [164.3s elapsed, 0.0 it/s]
+2025-05-16 14:21:02 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [218.4s elapsed, 0.0 it/s]
+2025-05-16 14:21:56 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [272.4s elapsed, 0.0 it/s]
+2025-05-16 14:22:50 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [326.5s elapsed, 0.0 it/s]
+2025-05-16 14:23:44 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [380.6s elapsed, 0.0 it/s]
+2025-05-16 14:24:38 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [434.9s elapsed, 0.0 it/s]
+2025-05-16 14:25:32 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [488.9s elapsed, 0.0 it/s]
+2025-05-16 14:26:26 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [542.9s elapsed, 0.0 it/s]
+2025-05-16 14:26:26 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-16 14:26:27 | INFO     | __main__:timed:49 | [Iter_1_question_10_removal] took 0.31 seconds
+2025-05-16 14:26:27 | INFO     | __main__:timed:49 | [Iter_1_question_11_removal] took 0.30 seconds
+2025-05-16 14:26:27 | INFO     | __main__:timed:49 | [Iter_1_question_12_removal] took 0.26 seconds
+2025-05-16 14:26:28 | INFO     | __main__:timed:49 | [Iter_1_question_13_removal] took 0.19 seconds
+2025-05-16 14:26:28 | INFO     | src.utils:update:256 | Processing target queries: 4/10 [1.1s elapsed, 3.7 it/s]
+2025-05-16 14:26:28 | INFO     | __main__:timed:49 | [Iter_1_question_14_removal] took 0.27 seconds
+2025-05-16 14:26:28 | INFO     | __main__:timed:49 | [Iter_1_question_15_removal] took 0.27 seconds
+2025-05-16 14:26:28 | INFO     | __main__:timed:49 | [Iter_1_question_16_removal] took 0.30 seconds
+2025-05-16 14:26:29 | INFO     | __main__:timed:49 | [Iter_1_question_17_removal] took 0.30 seconds
+2025-05-16 14:26:29 | INFO     | src.utils:update:256 | Processing target queries: 8/10 [2.3s elapsed, 3.5 it/s]
+2025-05-16 14:26:29 | INFO     | __main__:timed:49 | [Iter_1_question_18_removal] took 0.26 seconds
+2025-05-16 14:26:29 | INFO     | __main__:timed:49 | [Iter_1_question_19_removal] took 0.28 seconds
+2025-05-16 14:26:29 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [2.8s elapsed, 3.6 it/s]
+2025-05-16 14:26:29 | INFO     | src.utils:update:256 | Processing iterations: 2/10 [1095.6s elapsed, 0.0 it/s]
+2025-05-16 14:26:29 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-16 14:26:29 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-16 14:27:25 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [55.4s elapsed, 0.0 it/s]
+2025-05-16 14:28:19 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [109.6s elapsed, 0.0 it/s]
+2025-05-16 14:29:13 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [163.9s elapsed, 0.0 it/s]
+2025-05-16 14:30:08 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [218.3s elapsed, 0.0 it/s]
+2025-05-16 14:31:02 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [272.5s elapsed, 0.0 it/s]
+2025-05-16 14:31:56 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [326.8s elapsed, 0.0 it/s]
+2025-05-16 14:32:50 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [381.1s elapsed, 0.0 it/s]
+2025-05-16 14:33:45 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [435.3s elapsed, 0.0 it/s]
+2025-05-16 14:34:39 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [489.6s elapsed, 0.0 it/s]
+2025-05-16 14:35:33 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [544.0s elapsed, 0.0 it/s]
+2025-05-16 14:35:33 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-16 14:35:34 | INFO     | __main__:timed:49 | [Iter_2_question_20_removal] took 0.23 seconds
+2025-05-16 14:35:34 | INFO     | __main__:timed:49 | [Iter_2_question_21_removal] took 0.28 seconds
+2025-05-16 14:35:34 | INFO     | __main__:timed:49 | [Iter_2_question_22_removal] took 0.30 seconds
+2025-05-16 14:35:34 | INFO     | __main__:timed:49 | [Iter_2_question_23_removal] took 0.30 seconds
+2025-05-16 14:35:34 | INFO     | src.utils:update:256 | Processing target queries: 4/10 [1.1s elapsed, 3.5 it/s]
+2025-05-16 14:35:35 | INFO     | __main__:timed:49 | [Iter_2_question_24_removal] took 0.23 seconds
+2025-05-16 14:35:35 | INFO     | __main__:timed:49 | [Iter_2_question_25_removal] took 0.16 seconds
+2025-05-16 14:35:35 | INFO     | __main__:timed:49 | [Iter_2_question_26_removal] took 0.30 seconds
+2025-05-16 14:35:36 | INFO     | __main__:timed:49 | [Iter_2_question_27_removal] took 0.31 seconds
+2025-05-16 14:35:36 | INFO     | src.utils:update:256 | Processing target queries: 8/10 [2.2s elapsed, 3.7 it/s]
+2025-05-16 14:35:36 | INFO     | __main__:timed:49 | [Iter_2_question_28_removal] took 0.29 seconds
+2025-05-16 14:35:36 | INFO     | __main__:timed:49 | [Iter_2_question_29_removal] took 0.30 seconds
+2025-05-16 14:35:36 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [2.8s elapsed, 3.6 it/s]
+2025-05-16 14:35:36 | INFO     | src.utils:update:256 | Processing iterations: 3/10 [1642.4s elapsed, 0.0 it/s]
+2025-05-16 14:35:36 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-16 14:35:36 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-16 14:36:32 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [56.3s elapsed, 0.0 it/s]
+2025-05-16 14:37:27 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [111.0s elapsed, 0.0 it/s]
+2025-05-16 14:38:22 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [165.5s elapsed, 0.0 it/s]
+2025-05-16 14:39:16 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [220.2s elapsed, 0.0 it/s]
+2025-05-16 14:40:11 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [275.0s elapsed, 0.0 it/s]
+2025-05-16 14:41:06 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [329.6s elapsed, 0.0 it/s]
+2025-05-16 14:42:01 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [384.4s elapsed, 0.0 it/s]
+2025-05-16 14:42:55 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [439.0s elapsed, 0.0 it/s]
+2025-05-16 14:43:50 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [493.8s elapsed, 0.0 it/s]
+2025-05-16 14:44:45 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [548.6s elapsed, 0.0 it/s]
+2025-05-16 14:44:45 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-16 14:44:45 | INFO     | __main__:timed:49 | [Iter_3_question_30_removal] took 0.25 seconds
+2025-05-16 14:44:45 | INFO     | __main__:timed:49 | [Iter_3_question_31_removal] took 0.24 seconds
+2025-05-16 14:44:45 | INFO     | __main__:timed:49 | [Iter_3_question_32_removal] took 0.22 seconds
+2025-05-16 14:44:46 | INFO     | __main__:timed:49 | [Iter_3_question_33_removal] took 0.31 seconds
+2025-05-16 14:44:46 | INFO     | src.utils:update:256 | Processing target queries: 4/10 [1.1s elapsed, 3.8 it/s]
+2025-05-16 14:44:46 | INFO     | __main__:timed:49 | [Iter_3_question_34_removal] took 0.29 seconds
+2025-05-16 14:44:46 | INFO     | __main__:timed:49 | [Iter_3_question_35_removal] took 0.31 seconds
+2025-05-16 14:44:47 | INFO     | __main__:timed:49 | [Iter_3_question_36_removal] took 0.29 seconds
+2025-05-16 14:44:47 | INFO     | __main__:timed:49 | [Iter_3_question_37_removal] took 0.26 seconds
+2025-05-16 14:44:47 | INFO     | src.utils:update:256 | Processing target queries: 8/10 [2.2s elapsed, 3.6 it/s]
+2025-05-16 14:44:47 | INFO     | __main__:timed:49 | [Iter_3_question_38_removal] took 0.31 seconds
+2025-05-16 14:44:48 | INFO     | __main__:timed:49 | [Iter_3_question_39_removal] took 0.31 seconds
+2025-05-16 14:44:48 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [2.9s elapsed, 3.5 it/s]
+2025-05-16 14:44:48 | INFO     | src.utils:update:256 | Processing iterations: 4/10 [2193.8s elapsed, 0.0 it/s]
+2025-05-16 14:44:48 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-16 14:44:48 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-16 14:45:44 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [56.5s elapsed, 0.0 it/s]
+2025-05-16 14:46:39 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [111.6s elapsed, 0.0 it/s]
+2025-05-16 14:47:34 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [166.8s elapsed, 0.0 it/s]
+2025-05-16 14:48:30 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [222.1s elapsed, 0.0 it/s]
+2025-05-16 14:49:25 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [277.4s elapsed, 0.0 it/s]
+2025-05-16 14:50:20 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [332.4s elapsed, 0.0 it/s]
+2025-05-16 14:51:15 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [387.4s elapsed, 0.0 it/s]
+2025-05-16 14:52:10 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [442.4s elapsed, 0.0 it/s]
+2025-05-16 14:53:05 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [497.3s elapsed, 0.0 it/s]
+2025-05-16 14:54:00 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [552.5s elapsed, 0.0 it/s]
+2025-05-16 14:54:00 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-16 14:54:02 | INFO     | __main__:timed:49 | [Iter_4_question_40_removal] took 1.47 seconds
+2025-05-16 14:54:02 | INFO     | src.utils:update:256 | Processing target queries: 1/10 [1.5s elapsed, 0.7 it/s]
+2025-05-16 14:54:02 | INFO     | __main__:timed:49 | [Iter_4_question_41_removal] took 0.32 seconds
+2025-05-16 14:54:02 | INFO     | __main__:timed:49 | [Iter_4_question_42_removal] took 0.30 seconds
+2025-05-16 14:54:02 | INFO     | __main__:timed:49 | [Iter_4_question_43_removal] took 0.30 seconds
+2025-05-16 14:54:03 | INFO     | __main__:timed:49 | [Iter_4_question_44_removal] took 0.31 seconds
+2025-05-16 14:54:03 | INFO     | src.utils:update:256 | Processing target queries: 5/10 [2.7s elapsed, 1.8 it/s]
+2025-05-16 14:54:03 | INFO     | __main__:timed:49 | [Iter_4_question_45_removal] took 0.27 seconds
+2025-05-16 14:54:03 | INFO     | __main__:timed:49 | [Iter_4_question_46_removal] took 0.31 seconds
+2025-05-16 14:54:04 | INFO     | __main__:timed:49 | [Iter_4_question_47_removal] took 0.31 seconds
+2025-05-16 14:54:04 | INFO     | __main__:timed:49 | [Iter_4_question_48_removal] took 0.30 seconds
+2025-05-16 14:54:04 | INFO     | src.utils:update:256 | Processing target queries: 9/10 [4.0s elapsed, 2.3 it/s]
+2025-05-16 14:54:04 | INFO     | __main__:timed:49 | [Iter_4_question_49_removal] took 0.31 seconds
+2025-05-16 14:54:04 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [4.3s elapsed, 2.3 it/s]
+2025-05-16 14:54:04 | INFO     | src.utils:update:256 | Processing iterations: 5/10 [2750.6s elapsed, 0.0 it/s]
+2025-05-16 14:54:04 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-16 14:54:04 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-16 14:55:00 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [55.6s elapsed, 0.0 it/s]
+2025-05-16 14:55:54 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [109.2s elapsed, 0.0 it/s]
+2025-05-16 14:56:47 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [163.0s elapsed, 0.0 it/s]
+2025-05-16 14:57:41 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [216.5s elapsed, 0.0 it/s]
+2025-05-16 14:58:35 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [270.3s elapsed, 0.0 it/s]
+2025-05-16 14:59:28 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [324.0s elapsed, 0.0 it/s]
+2025-05-16 15:00:22 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [378.0s elapsed, 0.0 it/s]
+2025-05-16 15:01:16 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [431.7s elapsed, 0.0 it/s]
+2025-05-16 15:02:10 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [485.7s elapsed, 0.0 it/s]
+2025-05-16 15:03:04 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [539.5s elapsed, 0.0 it/s]
+2025-05-16 15:03:04 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-16 15:03:04 | INFO     | __main__:timed:49 | [Iter_5_question_50_removal] took 0.23 seconds
+2025-05-16 15:03:04 | INFO     | __main__:timed:49 | [Iter_5_question_51_removal] took 0.21 seconds
+2025-05-16 15:03:05 | INFO     | __main__:timed:49 | [Iter_5_question_52_removal] took 0.31 seconds
+2025-05-16 15:03:05 | INFO     | __main__:timed:49 | [Iter_5_question_53_removal] took 0.31 seconds
+2025-05-16 15:03:05 | INFO     | src.utils:update:256 | Processing target queries: 4/10 [1.1s elapsed, 3.7 it/s]
+2025-05-16 15:03:05 | INFO     | __main__:timed:49 | [Iter_5_question_54_removal] took 0.32 seconds
+2025-05-16 15:03:06 | INFO     | __main__:timed:49 | [Iter_5_question_55_removal] took 0.29 seconds
+2025-05-16 15:03:06 | INFO     | __main__:timed:49 | [Iter_5_question_56_removal] took 0.19 seconds
+2025-05-16 15:03:06 | INFO     | __main__:timed:49 | [Iter_5_question_57_removal] took 0.29 seconds
+2025-05-16 15:03:06 | INFO     | src.utils:update:256 | Processing target queries: 8/10 [2.2s elapsed, 3.6 it/s]
+2025-05-16 15:03:06 | INFO     | __main__:timed:49 | [Iter_5_question_58_removal] took 0.31 seconds
+2025-05-16 15:03:07 | INFO     | __main__:timed:49 | [Iter_5_question_59_removal] took 0.31 seconds
+2025-05-16 15:03:07 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [2.9s elapsed, 3.5 it/s]
+2025-05-16 15:03:07 | INFO     | src.utils:update:256 | Processing iterations: 6/10 [3292.9s elapsed, 0.0 it/s]
+2025-05-16 15:03:07 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-16 15:03:07 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-16 15:04:03 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [56.4s elapsed, 0.0 it/s]
+2025-05-16 15:04:58 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [111.5s elapsed, 0.0 it/s]
+2025-05-16 15:05:53 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [166.4s elapsed, 0.0 it/s]
+2025-05-16 15:06:48 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [221.3s elapsed, 0.0 it/s]
+2025-05-16 15:07:43 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [276.1s elapsed, 0.0 it/s]
+2025-05-16 15:08:38 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [331.1s elapsed, 0.0 it/s]
+2025-05-16 15:09:33 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [385.9s elapsed, 0.0 it/s]
+2025-05-16 15:10:28 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [440.8s elapsed, 0.0 it/s]
+2025-05-16 15:11:22 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [495.8s elapsed, 0.0 it/s]
+2025-05-16 15:12:17 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [550.6s elapsed, 0.0 it/s]
+2025-05-16 15:12:17 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-16 15:12:18 | INFO     | __main__:timed:49 | [Iter_6_question_60_removal] took 0.22 seconds
+2025-05-16 15:12:18 | INFO     | __main__:timed:49 | [Iter_6_question_61_removal] took 0.22 seconds
+2025-05-16 15:12:18 | INFO     | __main__:timed:49 | [Iter_6_question_62_removal] took 0.20 seconds
+2025-05-16 15:12:18 | INFO     | __main__:timed:49 | [Iter_6_question_63_removal] took 0.22 seconds
+2025-05-16 15:12:18 | INFO     | __main__:timed:49 | [Iter_6_question_64_removal] took 0.17 seconds
+2025-05-16 15:12:18 | INFO     | src.utils:update:256 | Processing target queries: 5/10 [1.1s elapsed, 4.7 it/s]
+2025-05-16 15:12:19 | INFO     | __main__:timed:49 | [Iter_6_question_65_removal] took 0.30 seconds
+2025-05-16 15:12:19 | INFO     | __main__:timed:49 | [Iter_6_question_66_removal] took 0.30 seconds
+2025-05-16 15:12:19 | INFO     | __main__:timed:49 | [Iter_6_question_67_removal] took 0.32 seconds
+2025-05-16 15:12:20 | INFO     | __main__:timed:49 | [Iter_6_question_68_removal] took 0.23 seconds
+2025-05-16 15:12:20 | INFO     | src.utils:update:256 | Processing target queries: 9/10 [2.2s elapsed, 4.0 it/s]
+2025-05-16 15:12:20 | INFO     | __main__:timed:49 | [Iter_6_question_69_removal] took 0.30 seconds
+2025-05-16 15:12:20 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [2.6s elapsed, 3.9 it/s]
+2025-05-16 15:12:20 | INFO     | src.utils:update:256 | Processing iterations: 7/10 [3846.1s elapsed, 0.0 it/s]
+2025-05-16 15:12:20 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-16 15:12:20 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-16 15:13:14 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [54.6s elapsed, 0.0 it/s]
+2025-05-16 15:14:09 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [108.8s elapsed, 0.0 it/s]
+2025-05-16 15:15:03 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [163.1s elapsed, 0.0 it/s]
+2025-05-16 15:15:57 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [217.5s elapsed, 0.0 it/s]
+2025-05-16 15:16:52 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [271.7s elapsed, 0.0 it/s]
+2025-05-16 15:17:46 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [326.0s elapsed, 0.0 it/s]
+2025-05-16 15:18:40 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [380.3s elapsed, 0.0 it/s]
+2025-05-16 15:19:34 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [434.4s elapsed, 0.0 it/s]
+2025-05-16 15:20:28 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [488.6s elapsed, 0.0 it/s]
+2025-05-16 15:21:23 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [543.0s elapsed, 0.0 it/s]
+2025-05-16 15:21:23 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-16 15:21:23 | INFO     | __main__:timed:49 | [Iter_7_question_70_removal] took 0.21 seconds
+2025-05-16 15:21:23 | INFO     | __main__:timed:49 | [Iter_7_question_71_removal] took 0.22 seconds
+2025-05-16 15:21:23 | INFO     | __main__:timed:49 | [Iter_7_question_72_removal] took 0.14 seconds
+2025-05-16 15:21:24 | INFO     | __main__:timed:49 | [Iter_7_question_73_removal] took 0.21 seconds
+2025-05-16 15:21:24 | INFO     | __main__:timed:49 | [Iter_7_question_74_removal] took 0.22 seconds
+2025-05-16 15:21:24 | INFO     | src.utils:update:256 | Processing target queries: 5/10 [1.0s elapsed, 4.8 it/s]
+2025-05-16 15:21:24 | INFO     | __main__:timed:49 | [Iter_7_question_75_removal] took 0.33 seconds
+2025-05-16 15:21:25 | INFO     | __main__:timed:49 | [Iter_7_question_76_removal] took 0.31 seconds
+2025-05-16 15:21:25 | INFO     | __main__:timed:49 | [Iter_7_question_77_removal] took 0.31 seconds
+2025-05-16 15:21:25 | INFO     | __main__:timed:49 | [Iter_7_question_78_removal] took 0.21 seconds
+2025-05-16 15:21:25 | INFO     | src.utils:update:256 | Processing target queries: 9/10 [2.2s elapsed, 4.0 it/s]
+2025-05-16 15:21:25 | INFO     | __main__:timed:49 | [Iter_7_question_79_removal] took 0.29 seconds
+2025-05-16 15:21:25 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [2.5s elapsed, 4.0 it/s]
+2025-05-16 15:21:25 | INFO     | src.utils:update:256 | Processing iterations: 8/10 [4391.6s elapsed, 0.0 it/s]
+2025-05-16 15:21:25 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-16 15:21:25 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-16 15:22:22 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [57.1s elapsed, 0.0 it/s]
+2025-05-16 15:23:17 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [111.9s elapsed, 0.0 it/s]
+2025-05-16 15:24:13 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [167.4s elapsed, 0.0 it/s]
+2025-05-16 15:25:07 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [222.1s elapsed, 0.0 it/s]
+2025-05-16 15:26:03 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [278.1s elapsed, 0.0 it/s]
+2025-05-16 15:26:57 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [331.9s elapsed, 0.0 it/s]
+2025-05-16 15:27:51 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [385.9s elapsed, 0.0 it/s]
+2025-05-16 15:28:45 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [439.9s elapsed, 0.0 it/s]
+2025-05-16 15:29:39 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [493.9s elapsed, 0.0 it/s]
+2025-05-16 15:30:33 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [547.8s elapsed, 0.0 it/s]
+2025-05-16 15:30:33 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-16 15:30:33 | INFO     | __main__:timed:49 | [Iter_8_question_80_removal] took 0.31 seconds
+2025-05-16 15:30:34 | INFO     | __main__:timed:49 | [Iter_8_question_81_removal] took 0.30 seconds
+2025-05-16 15:30:34 | INFO     | __main__:timed:49 | [Iter_8_question_82_removal] took 0.29 seconds
+2025-05-16 15:30:34 | INFO     | __main__:timed:49 | [Iter_8_question_83_removal] took 0.29 seconds
+2025-05-16 15:30:34 | INFO     | src.utils:update:256 | Processing target queries: 4/10 [1.2s elapsed, 3.2 it/s]
+2025-05-16 15:30:35 | INFO     | __main__:timed:49 | [Iter_8_question_84_removal] took 0.31 seconds
+2025-05-16 15:30:35 | INFO     | __main__:timed:49 | [Iter_8_question_85_removal] took 0.29 seconds
+2025-05-16 15:30:35 | INFO     | __main__:timed:49 | [Iter_8_question_86_removal] took 0.30 seconds
+2025-05-16 15:30:36 | INFO     | __main__:timed:49 | [Iter_8_question_87_removal] took 0.29 seconds
+2025-05-16 15:30:36 | INFO     | src.utils:update:256 | Processing target queries: 8/10 [2.5s elapsed, 3.3 it/s]
+2025-05-16 15:30:36 | INFO     | __main__:timed:49 | [Iter_8_question_88_removal] took 0.30 seconds
+2025-05-16 15:30:36 | INFO     | __main__:timed:49 | [Iter_8_question_89_removal] took 0.30 seconds
+2025-05-16 15:30:36 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [3.1s elapsed, 3.2 it/s]
+2025-05-16 15:30:36 | INFO     | src.utils:update:256 | Processing iterations: 9/10 [4942.5s elapsed, 0.0 it/s]
+2025-05-16 15:30:36 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-16 15:30:36 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-16 15:31:32 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [55.4s elapsed, 0.0 it/s]
+2025-05-16 15:32:26 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [109.9s elapsed, 0.0 it/s]
+2025-05-16 15:33:21 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [164.4s elapsed, 0.0 it/s]
+2025-05-16 15:34:15 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [219.0s elapsed, 0.0 it/s]
+2025-05-16 15:35:10 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [273.6s elapsed, 0.0 it/s]
+2025-05-16 15:36:04 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [327.9s elapsed, 0.0 it/s]
+2025-05-16 15:36:59 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [382.5s elapsed, 0.0 it/s]
+2025-05-16 15:37:53 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [436.9s elapsed, 0.0 it/s]
+2025-05-16 15:38:48 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [491.3s elapsed, 0.0 it/s]
+2025-05-16 15:39:42 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [545.8s elapsed, 0.0 it/s]
+2025-05-16 15:39:42 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-16 15:39:42 | INFO     | __main__:timed:49 | [Iter_9_question_90_removal] took 0.30 seconds
+2025-05-16 15:39:43 | INFO     | __main__:timed:49 | [Iter_9_question_91_removal] took 0.26 seconds
+2025-05-16 15:39:43 | INFO     | __main__:timed:49 | [Iter_9_question_92_removal] took 0.31 seconds
+2025-05-16 15:39:43 | INFO     | __main__:timed:49 | [Iter_9_question_93_removal] took 0.26 seconds
+2025-05-16 15:39:43 | INFO     | src.utils:update:256 | Processing target queries: 4/10 [1.2s elapsed, 3.5 it/s]
+2025-05-16 15:39:43 | INFO     | __main__:timed:49 | [Iter_9_question_94_removal] took 0.30 seconds
+2025-05-16 15:39:44 | INFO     | __main__:timed:49 | [Iter_9_question_95_removal] took 0.21 seconds
+2025-05-16 15:39:44 | INFO     | __main__:timed:49 | [Iter_9_question_96_removal] took 0.19 seconds
+2025-05-16 15:39:44 | INFO     | __main__:timed:49 | [Iter_9_question_97_removal] took 0.19 seconds
+2025-05-16 15:39:44 | INFO     | __main__:timed:49 | [Iter_9_question_98_removal] took 0.19 seconds
+2025-05-16 15:39:44 | INFO     | src.utils:update:256 | Processing target queries: 9/10 [2.3s elapsed, 3.9 it/s]
+2025-05-16 15:39:45 | INFO     | __main__:timed:49 | [Iter_9_question_99_removal] took 0.21 seconds
+2025-05-16 15:39:45 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [2.5s elapsed, 4.0 it/s]
+2025-05-16 15:39:45 | INFO     | src.utils:update:256 | Processing iterations: 10/10 [5490.8s elapsed, 0.0 it/s]
+2025-05-16 15:39:45 | INFO     | __main__:main:382 | total_topk_num: 500
+2025-05-16 15:39:45 | INFO     | __main__:main:383 | total_adv_num: 300
+2025-05-16 15:39:45 | INFO     | __main__:main:385 | False removal rate in true content contents: 0.04%
+2025-05-16 15:39:45 | INFO     | __main__:main:388 | Success removal rate in adv contents: 0.98%
+2025-05-16 15:39:45 | INFO     | __main__:main:391 | Success injection rate in top 5 contents: 0.01%
+2025-05-16 15:39:45 | INFO     | __main__:main:404 | Using mistralai/Mistral-Nemo-Instruct-2407 as the LLM model
+2025-05-16 15:45:11 | INFO     | __main__:timed:49 | [llm_inference_and_defense] took 39.68 seconds
+2025-05-16 15:45:11 | INFO     | __main__:main:485 | Correct Answer Percentage: 70.00%
+2025-05-16 15:45:11 | INFO     | __main__:main:486 | Incorrect Answer Percentage: 3.00%
+2025-05-16 15:45:11 | INFO     | __main__:main:488 | Total run time for inference, removal and defense: 67.88

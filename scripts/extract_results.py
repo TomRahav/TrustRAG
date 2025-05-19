@@ -16,9 +16,9 @@ desired_patterns = {
 
 # Initialize a list to store the extracted data
 extracted_data = []
-
+dir = "logs"
 # Traverse through the 'logs' directory and its subdirectories
-for root, dirs, files in os.walk("/home/tom.rahav/TrustRAG/logs"):
+for root, dirs, files in os.walk(f"/home/tom.rahav/TrustRAG/{dir}"):
     for file in files:
         if file.endswith(".log"):
             file_path = os.path.join(root, file)
@@ -52,10 +52,11 @@ for root, dirs, files in os.walk("/home/tom.rahav/TrustRAG/logs"):
                         "M": r"-M(\d+)",
                         "repeat": r"Repeat(\d+)",
                         "no_questions": r"no_questions",
+                        "both_sides": r"both_sides",
                     }
                     for key, pattern in patterns.items():
                         match = re.search(pattern, experiment_name)
-                        if key == "no_questions":
+                        if key == "no_questions" or key == "both_sides":
                             data[key] = 1 if match else 0
                         else:
                             data[key] = match.group(1) if match else None
@@ -70,6 +71,7 @@ for root, dirs, files in os.walk("/home/tom.rahav/TrustRAG/logs"):
                         "adv_a_position",
                         "removal",
                         "no_questions",
+                        "both_sides",
                         "defense",
                         "adv_per_query",
                         "M",
@@ -93,16 +95,17 @@ headers = [
     "attack",
     "adv_a_position",
     "removal",
-    "no_questions",
     "defense",
     "adv_per_query",
     "M",
     "repeat",
+    "no_questions",
+    "both_sides",
 ] + list(desired_patterns.keys())
 
 # Write the extracted data to a CSV file
 with open(
-    "/home/tom.rahav/TrustRAG/notebooks/extracted_log_data.csv",
+    f"/home/tom.rahav/TrustRAG/notebooks/extracted_{dir}_data.csv",
     "w",
     newline="",
     encoding="utf-8",
@@ -112,4 +115,4 @@ with open(
     for row in extracted_data:
         writer.writerow(row)
 
-print("Data extraction complete. Results saved to 'extracted_log_data.csv'.")
+print(f"Data extraction complete. Results saved to 'extracted_{dir}_data.csv'.")

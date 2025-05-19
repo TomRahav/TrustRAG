@@ -176,8 +176,8 @@ class Attacker:
                         raise KeyError
 
                     loss = sim.mean()
-                    if self.early_stop and sim.item() > top1_score + 0.1:
-                        break
+                    # if self.early_stop and sim.item() > top1_score + 0.1:
+                    #     break
                     loss.backward()
 
                     temp_grad = embedding_gradient.get()

@@ -1,0 +1,167 @@
+2025-05-14 08:36:40 | INFO     | __main__:main:130 | Experiment Name -- dataset_msmarco-retriver_contriever-model_true_meta-llama/Llama-3.1-8B-Instruct-M10xRepeat10-attack_hotflip-removal_none-defend_conflict-dot-adv_per_query3-adv_a_position_start-Top_5-Seed_12_no_questions
+2025-05-14 08:36:42 | INFO     | src.utils:load_cached_data:42 | Cache file data_cache/msmarco_train.pkl exists. Loading data...
+2025-05-14 08:36:50 | INFO     | src.utils:load_cached_data:42 | Cache file data_cache/msmarco_answers.pkl exists. Loading data...
+2025-05-14 08:36:50 | INFO     | __main__:main:168 | Please evaluate on BEIR first -- contriever on msmarco
+2025-05-14 08:36:50 | INFO     | __main__:main:172 | Now try to get beir eval results from results/beir_results/...
+2025-05-14 08:36:50 | INFO     | __main__:main:184 | Automatically get beir_resutls from results/beir_results/msmarco-contriever.json.
+2025-05-14 08:36:50 | INFO     | __main__:main:190 | Attack method: hotflip
+2025-05-14 08:36:50 | INFO     | __main__:main:192 | load retrieval models
+2025-05-14 08:36:51 | INFO     | src.utils:__init__:247 | Starting Processing iterations: 0/10
+2025-05-14 08:36:51 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-14 08:36:51 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-14 08:37:54 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [63.4s elapsed, 0.0 it/s]
+2025-05-14 08:38:54 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [123.2s elapsed, 0.0 it/s]
+2025-05-14 08:39:48 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [177.5s elapsed, 0.0 it/s]
+2025-05-14 08:40:42 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [231.2s elapsed, 0.0 it/s]
+2025-05-14 08:41:39 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [288.0s elapsed, 0.0 it/s]
+2025-05-14 08:42:32 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [341.3s elapsed, 0.0 it/s]
+2025-05-14 08:43:25 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [394.2s elapsed, 0.0 it/s]
+2025-05-14 08:44:16 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [445.2s elapsed, 0.0 it/s]
+2025-05-14 08:45:12 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [500.7s elapsed, 0.0 it/s]
+2025-05-14 08:46:04 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [553.0s elapsed, 0.0 it/s]
+2025-05-14 08:46:04 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-14 08:46:04 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [0.1s elapsed, 176.0 it/s]
+2025-05-14 08:46:04 | INFO     | src.utils:update:256 | Processing iterations: 1/10 [553.0s elapsed, 0.0 it/s]
+2025-05-14 08:46:04 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-14 08:46:04 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-14 08:46:56 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [52.2s elapsed, 0.0 it/s]
+2025-05-14 08:47:52 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [108.0s elapsed, 0.0 it/s]
+2025-05-14 08:48:50 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [165.6s elapsed, 0.0 it/s]
+2025-05-14 08:49:41 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [216.8s elapsed, 0.0 it/s]
+2025-05-14 08:50:33 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [269.2s elapsed, 0.0 it/s]
+2025-05-14 08:51:27 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [323.0s elapsed, 0.0 it/s]
+2025-05-14 08:52:18 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [374.3s elapsed, 0.0 it/s]
+2025-05-14 08:53:11 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [426.5s elapsed, 0.0 it/s]
+2025-05-14 08:54:06 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [482.1s elapsed, 0.0 it/s]
+2025-05-14 08:55:00 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [536.1s elapsed, 0.0 it/s]
+2025-05-14 08:55:00 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-14 08:55:00 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [0.1s elapsed, 144.9 it/s]
+2025-05-14 08:55:00 | INFO     | src.utils:update:256 | Processing iterations: 2/10 [1089.3s elapsed, 0.0 it/s]
+2025-05-14 08:55:00 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-14 08:55:00 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-14 08:55:53 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [52.5s elapsed, 0.0 it/s]
+2025-05-14 08:56:46 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [106.2s elapsed, 0.0 it/s]
+2025-05-14 08:57:39 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [159.0s elapsed, 0.0 it/s]
+2025-05-14 08:58:31 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [211.0s elapsed, 0.0 it/s]
+2025-05-14 08:59:23 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [263.0s elapsed, 0.0 it/s]
+2025-05-14 09:00:15 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [315.2s elapsed, 0.0 it/s]
+2025-05-14 09:01:11 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [370.8s elapsed, 0.0 it/s]
+2025-05-14 09:02:03 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [422.8s elapsed, 0.0 it/s]
+2025-05-14 09:02:55 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [474.9s elapsed, 0.0 it/s]
+2025-05-14 09:03:48 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [527.9s elapsed, 0.0 it/s]
+2025-05-14 09:03:48 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-14 09:03:48 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [0.1s elapsed, 146.2 it/s]
+2025-05-14 09:03:48 | INFO     | src.utils:update:256 | Processing iterations: 3/10 [1617.3s elapsed, 0.0 it/s]
+2025-05-14 09:03:48 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-14 09:03:48 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-14 09:04:43 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [55.2s elapsed, 0.0 it/s]
+2025-05-14 09:05:35 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [107.1s elapsed, 0.0 it/s]
+2025-05-14 09:06:34 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [165.6s elapsed, 0.0 it/s]
+2025-05-14 09:07:25 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [216.9s elapsed, 0.0 it/s]
+2025-05-14 09:08:17 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [268.2s elapsed, 0.0 it/s]
+2025-05-14 09:09:12 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [324.0s elapsed, 0.0 it/s]
+2025-05-14 09:10:04 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [376.0s elapsed, 0.0 it/s]
+2025-05-14 09:10:56 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [427.3s elapsed, 0.0 it/s]
+2025-05-14 09:11:47 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [478.6s elapsed, 0.0 it/s]
+2025-05-14 09:12:38 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [530.0s elapsed, 0.0 it/s]
+2025-05-14 09:12:38 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-14 09:12:38 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [0.1s elapsed, 190.3 it/s]
+2025-05-14 09:12:38 | INFO     | src.utils:update:256 | Processing iterations: 4/10 [2147.3s elapsed, 0.0 it/s]
+2025-05-14 09:12:38 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-14 09:12:38 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-14 09:13:30 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [51.3s elapsed, 0.0 it/s]
+2025-05-14 09:14:21 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [102.5s elapsed, 0.0 it/s]
+2025-05-14 09:15:12 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [153.8s elapsed, 0.0 it/s]
+2025-05-14 09:16:03 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [205.1s elapsed, 0.0 it/s]
+2025-05-14 09:16:55 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [256.4s elapsed, 0.0 it/s]
+2025-05-14 09:17:46 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [307.7s elapsed, 0.0 it/s]
+2025-05-14 09:18:38 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [359.4s elapsed, 0.0 it/s]
+2025-05-14 09:19:31 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [412.2s elapsed, 0.0 it/s]
+2025-05-14 09:20:23 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [464.4s elapsed, 0.0 it/s]
+2025-05-14 09:21:16 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [517.3s elapsed, 0.0 it/s]
+2025-05-14 09:21:16 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-14 09:21:16 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [0.1s elapsed, 144.9 it/s]
+2025-05-14 09:21:16 | INFO     | src.utils:update:256 | Processing iterations: 5/10 [2664.7s elapsed, 0.0 it/s]
+2025-05-14 09:21:16 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-14 09:21:16 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-14 09:22:12 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [56.0s elapsed, 0.0 it/s]
+2025-05-14 09:23:04 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [107.9s elapsed, 0.0 it/s]
+2025-05-14 09:23:56 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [160.6s elapsed, 0.0 it/s]
+2025-05-14 09:24:49 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [213.7s elapsed, 0.0 it/s]
+2025-05-14 09:25:44 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [268.7s elapsed, 0.0 it/s]
+2025-05-14 09:26:38 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [322.5s elapsed, 0.0 it/s]
+2025-05-14 09:27:33 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [377.6s elapsed, 0.0 it/s]
+2025-05-14 09:28:27 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [430.9s elapsed, 0.0 it/s]
+2025-05-14 09:29:19 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [482.8s elapsed, 0.0 it/s]
+2025-05-14 09:30:10 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [534.7s elapsed, 0.0 it/s]
+2025-05-14 09:30:10 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-14 09:30:10 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [0.1s elapsed, 192.7 it/s]
+2025-05-14 09:30:10 | INFO     | src.utils:update:256 | Processing iterations: 6/10 [3199.4s elapsed, 0.0 it/s]
+2025-05-14 09:30:10 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-14 09:30:10 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-14 09:31:03 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [52.1s elapsed, 0.0 it/s]
+2025-05-14 09:31:54 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [104.0s elapsed, 0.0 it/s]
+2025-05-14 09:32:46 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [156.0s elapsed, 0.0 it/s]
+2025-05-14 09:33:38 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [208.0s elapsed, 0.0 it/s]
+2025-05-14 09:34:31 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [260.6s elapsed, 0.0 it/s]
+2025-05-14 09:35:22 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [311.9s elapsed, 0.0 it/s]
+2025-05-14 09:36:15 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [364.7s elapsed, 0.0 it/s]
+2025-05-14 09:37:10 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [420.0s elapsed, 0.0 it/s]
+2025-05-14 09:38:02 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [471.3s elapsed, 0.0 it/s]
+2025-05-14 09:38:53 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [522.7s elapsed, 0.0 it/s]
+2025-05-14 09:38:53 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-14 09:38:53 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [0.1s elapsed, 142.4 it/s]
+2025-05-14 09:38:53 | INFO     | src.utils:update:256 | Processing iterations: 7/10 [3722.2s elapsed, 0.0 it/s]
+2025-05-14 09:38:53 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-14 09:38:53 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-14 09:39:47 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [53.7s elapsed, 0.0 it/s]
+2025-05-14 09:40:41 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [107.6s elapsed, 0.0 it/s]
+2025-05-14 09:41:33 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [159.9s elapsed, 0.0 it/s]
+2025-05-14 09:42:25 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [212.2s elapsed, 0.0 it/s]
+2025-05-14 09:43:18 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [264.4s elapsed, 0.0 it/s]
+2025-05-14 09:44:10 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [316.7s elapsed, 0.0 it/s]
+2025-05-14 09:45:03 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [369.8s elapsed, 0.0 it/s]
+2025-05-14 09:45:56 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [422.5s elapsed, 0.0 it/s]
+2025-05-14 09:46:47 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [473.9s elapsed, 0.0 it/s]
+2025-05-14 09:47:40 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [527.1s elapsed, 0.0 it/s]
+2025-05-14 09:47:40 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-14 09:47:40 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [0.1s elapsed, 185.7 it/s]
+2025-05-14 09:47:40 | INFO     | src.utils:update:256 | Processing iterations: 8/10 [4249.4s elapsed, 0.0 it/s]
+2025-05-14 09:47:40 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-14 09:47:40 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-14 09:48:34 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [53.6s elapsed, 0.0 it/s]
+2025-05-14 09:49:30 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [109.2s elapsed, 0.0 it/s]
+2025-05-14 09:50:22 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [162.1s elapsed, 0.0 it/s]
+2025-05-14 09:51:15 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [215.0s elapsed, 0.0 it/s]
+2025-05-14 09:52:08 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [268.0s elapsed, 0.0 it/s]
+2025-05-14 09:53:10 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [330.1s elapsed, 0.0 it/s]
+2025-05-14 09:54:04 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [383.6s elapsed, 0.0 it/s]
+2025-05-14 09:54:56 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [435.9s elapsed, 0.0 it/s]
+2025-05-14 09:55:48 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [487.6s elapsed, 0.0 it/s]
+2025-05-14 09:56:39 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [539.0s elapsed, 0.0 it/s]
+2025-05-14 09:56:39 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-14 09:56:39 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [0.1s elapsed, 177.9 it/s]
+2025-05-14 09:56:39 | INFO     | src.utils:update:256 | Processing iterations: 9/10 [4788.4s elapsed, 0.0 it/s]
+2025-05-14 09:56:39 | INFO     | src.attack:__init__:75 | Initializing attacker with method: hotflip
+2025-05-14 09:56:39 | INFO     | src.utils:__init__:247 | Starting Processing HotFlip queries: 0/10
+2025-05-14 09:57:31 | INFO     | src.utils:update:256 | Processing HotFlip queries: 1/10 [51.6s elapsed, 0.0 it/s]
+2025-05-14 09:58:23 | INFO     | src.utils:update:256 | Processing HotFlip queries: 2/10 [103.6s elapsed, 0.0 it/s]
+2025-05-14 09:59:14 | INFO     | src.utils:update:256 | Processing HotFlip queries: 3/10 [155.0s elapsed, 0.0 it/s]
+2025-05-14 10:00:06 | INFO     | src.utils:update:256 | Processing HotFlip queries: 4/10 [206.4s elapsed, 0.0 it/s]
+2025-05-14 10:00:57 | INFO     | src.utils:update:256 | Processing HotFlip queries: 5/10 [258.0s elapsed, 0.0 it/s]
+2025-05-14 10:01:49 | INFO     | src.utils:update:256 | Processing HotFlip queries: 6/10 [309.4s elapsed, 0.0 it/s]
+2025-05-14 10:02:44 | INFO     | src.utils:update:256 | Processing HotFlip queries: 7/10 [364.8s elapsed, 0.0 it/s]
+2025-05-14 10:03:36 | INFO     | src.utils:update:256 | Processing HotFlip queries: 8/10 [417.0s elapsed, 0.0 it/s]
+2025-05-14 10:04:30 | INFO     | src.utils:update:256 | Processing HotFlip queries: 9/10 [470.7s elapsed, 0.0 it/s]
+2025-05-14 10:05:22 | INFO     | src.utils:update:256 | Processing HotFlip queries: 10/10 [522.2s elapsed, 0.0 it/s]
+2025-05-14 10:05:22 | INFO     | src.utils:__init__:247 | Starting Processing target queries: 0/10
+2025-05-14 10:05:22 | INFO     | src.utils:update:256 | Processing target queries: 10/10 [0.1s elapsed, 188.7 it/s]
+2025-05-14 10:05:22 | INFO     | src.utils:update:256 | Processing iterations: 10/10 [5310.7s elapsed, 0.0 it/s]
+2025-05-14 10:05:22 | INFO     | __main__:main:382 | total_topk_num: 500
+2025-05-14 10:05:22 | INFO     | __main__:main:383 | total_adv_num: 300
+2025-05-14 10:05:22 | INFO     | __main__:main:391 | Success injection rate in top 5 contents: 0.59%
+2025-05-14 10:05:22 | INFO     | __main__:main:404 | Using meta-llama/Llama-3.1-8B-Instruct as the LLM model
+2025-05-14 10:06:08 | INFO     | __main__:timed:49 | [llm_inference_and_defense] took 40.77 seconds
+2025-05-14 10:06:08 | INFO     | __main__:main:485 | Correct Answer Percentage: 79.00%
+2025-05-14 10:06:08 | INFO     | __main__:main:486 | Incorrect Answer Percentage: 13.00%
+2025-05-14 10:06:08 | INFO     | __main__:main:488 | Total run time for inference, removal and defense: 40.77

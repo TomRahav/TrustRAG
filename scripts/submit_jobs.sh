@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Define arrays of parameters 
-datasets=('hotpotqa') # 'nq' 'hotpotqa' 'msmarco'
-models_names=("meta-llama/Llama-3.1-8B-Instruct") #  "mistralai/Mistral-Nemo-Instruct-2407" "meta-llama/Llama-3.1-8B-Instruct"
-eval_models_names=("contriever") # "contriever" "contriever-ms" "ance"
-attacks=("hotflip") # "none" "LM_targeted" "hotflip" "pia"
-removals=('none' 'drift' 'kmeans_ngram') # 'none' 'drift' 'kmeans' 'kmeans_ngram'
-defenses=('none' 'conflict') # 'none' 'conflict' 'astute' 'instruct'
-scores=('cos_sim') # 'dot' 'cos_sim'
+datasets=('nq' 'hotpotqa' 'msmarco') # 'nq' 'hotpotqa' 'msmarco'
+models_names=("gpt-4o" "mistralai/Mistral-Nemo-Instruct-2407" "meta-llama/Llama-3.1-8B-Instruct") #  "mistralai/Mistral-Nemo-Instruct-2407" "meta-llama/Llama-3.1-8B-Instruct"
+eval_models_names=("ance") # "contriever" "contriever-ms" "ance"
+attacks=("none" "hotflip") # "none" "LM_targeted" "hotflip" "pia"
+removals=('none' 'drift' 'kmeans_ngram') # 'none' 'drift' 'kmeans' 'kmeans_ngram' 'all'
+defenses=('none') # 'none' 'conflict' 'astute' 'instruct'
+scores=('dot' 'cos_sim') # 'dot' 'cos_sim'
 positions=('start' 'end') # 'start' 'end'
 
 

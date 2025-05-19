@@ -171,7 +171,7 @@ def k_mean_filtering(embedding_tokenizer, embedding_model, topk_contents, n_gram
     if len(array_1_avg) == 0:
         if np.mean(array_0_avg) > threshold:
             if calculate_similarity(array_0_emb[0], array_1_emb[0]) > threshold:
-                return [], []
+                return []
             topk_contents = array_1
             return topk_contents
         else:
@@ -181,7 +181,7 @@ def k_mean_filtering(embedding_tokenizer, embedding_model, topk_contents, n_gram
     if len(array_0_avg) == 0:
         if np.mean(array_1_avg) > threshold:
             if calculate_similarity(array_0_emb[0], array_1_emb[0]) > threshold:
-                return [], []
+                return []
             topk_contents = array_0
             return topk_contents
         else:
@@ -190,7 +190,7 @@ def k_mean_filtering(embedding_tokenizer, embedding_model, topk_contents, n_gram
 
     if np.mean(array_1_avg) > np.mean(array_0_avg):
         if np.mean(array_0_avg) > threshold:
-            return [], []
+            return []
         if np.mean(array_1_avg) < threshold:
             del_list_1 = group_n_gram_filtering(array_1)
             del_list_0 = group_n_gram_filtering(array_0)
@@ -234,7 +234,7 @@ def k_mean_filtering(embedding_tokenizer, embedding_model, topk_contents, n_gram
             topk_contents = array_0
     else:
         if np.mean(array_1_avg) > threshold:
-            return [], []
+            return []
         if np.mean(array_0_avg) < threshold:
             del_list_1 = group_n_gram_filtering(array_1)
             del_list_0 = group_n_gram_filtering(array_0)
@@ -305,7 +305,132 @@ def similarity_filtering(topk_embeddings, topk_contents):
     return topk_contents
 
 
-def drift_filtering(args, tokenizer, model, get_emb, question, contents):
+def drift_filtering(args, tokenizer, model, get_emb, question, contents, score):
+
+    question_top_k_adv_tokenized = tokenizer(
+        [question] + contents,
+        padding=True,
+        truncation=True,
+        return_tensors="pt",
+    )
+    question_top_k_adv_tokenized = {
+        key: value.cuda() for key, value in question_top_k_adv_tokenized.items()
+    }
+    top_k_adv_tokenized = {
+        key: value[1:] for key, value in question_top_k_adv_tokenized.items()
+    }
+    question_top_k_adv_embedded = get_emb(model, question_top_k_adv_tokenized)
+    question_embed = question_top_k_adv_embedded[0].unsqueeze(0)
+    self_similarity_scores_start = []
+    self_similarity_scores_end = []
+    self_scores = []
+    for i in range(0, len(top_k_adv_tokenized["input_ids"])):
+        # truncating the sentence
+        current_embedded = question_top_k_adv_embedded[i + 1].unsqueeze(0)
+        all_truncated_embeddings = torch.cat(
+            (
+                current_embedded,
+                current_embedded,
+            ),
+            dim=0,
+        )
+        stop = 20
+        current_tokenized = {
+            key: value[i].unsqueeze(0) for key, value in top_k_adv_tokenized.items()
+        }
+        for j in range(1, stop + 2, stop):
+            if torch.sum(current_tokenized["attention_mask"]).item() - 2 <= stop:
+                all_truncated_embeddings = torch.cat(
+                    (
+                        all_truncated_embeddings,
+                        current_embedded,
+                        current_embedded,
+                    ),
+                    dim=0,
+                )
+                continue
+            current_tokenized_truncated_start = get_tokenized_sentence_sliced(
+                current_tokenized,
+                j,
+                "start",
+            )
+            current_embedded_truncated_start = get_emb(
+                model, current_tokenized_truncated_start
+            )
+            current_tokenized_truncated_end = get_tokenized_sentence_sliced(
+                current_tokenized,
+                j,
+                "end",
+            )
+            current_embedded_truncated_end = get_emb(
+                model, current_tokenized_truncated_end
+            )
+            all_truncated_embeddings = torch.cat(
+                (
+                    all_truncated_embeddings,
+                    current_embedded_truncated_start,
+                    current_embedded_truncated_end,
+                ),
+                dim=0,
+            )
+        question_current_embedded = torch.cat((question_embed, current_embedded))
+        if args.score_function == "dot":
+            scores = torch.mm(
+                question_current_embedded,
+                all_truncated_embeddings.T,
+            )
+        elif args.score_function == "cos_sim":
+            scores = cos_similarity(question_current_embedded, all_truncated_embeddings)
+        # logger.info(
+        #     f"Similarity for sentence with {i+1} truncated from start and itself : {scores[1][0::2]}"
+        #     f"Similarity for sentence with {i+1} truncated from end and itself: {scores[1][1::2]}"
+        # )
+        scores = scores.cpu().detach().numpy().round(4)
+        self_scores.append(scores[1])
+        self_similarity_scores_start.append(
+            (
+                f"top k index: {i+1}",
+                scores[1][0::2],
+            )
+        )
+        self_similarity_scores_end.append(
+            (
+                f"top k index: {i+1}",
+                scores[1][1::2],
+            )
+        )
+
+    self_scores = np.vstack(self_scores)
+    self_truncated_start_scores = self_scores[:, 0::2]
+    self_truncated_end_scores = self_scores[:, 1::2]
+    self_truncated_start_mask = diff_scores_mask(
+        self_truncated_start_scores, threshold=0.2 if score == "cos_sim" else 0.7
+    )
+    self_truncated_end_mask = diff_scores_mask(
+        self_truncated_end_scores, threshold=0.2 if score == "cos_sim" else 0.7
+    )
+
+    # Optionally, save the self-similarity scores to a file
+    # save_outputs(
+    #     self_similarity_scores_start,
+    #     args.log_name,
+    #     "self_similarity_scores_truncated_start",
+    # )
+    # save_outputs(
+    #     self_similarity_scores_end,
+    #     args.log_name,
+    #     "self_similarity_scores_truncated_end",
+    # )
+    topk_contents = contents
+    topk_contents = [t for t, m in zip(topk_contents, self_truncated_start_mask) if m]
+    topk_contents = [t for t, m in zip(topk_contents, self_truncated_end_mask) if m]
+    return topk_contents
+
+
+def drift_filtering_question_aware(
+    args, tokenizer, model, get_emb, question, contents, score
+):
+
     question_top_k_adv_tokenized = tokenizer(
         [question] + contents,
         padding=True,
@@ -403,30 +528,35 @@ def drift_filtering(args, tokenizer, model, get_emb, question, contents):
                 scores[1][1::2],
             )
         )
-        questions_scores.append(scores[0])
-        question_similarity_scores_start.append(
-            (
-                f"top k index: {i+1}",
-                scores[0][0::2],
-            )
-        )
-        question_similarity_scores_end.append(
-            (
-                f"top k index: {i+1}",
-                scores[0][1::2],
-            )
-        )
+        # questions_scores.append(scores[0])
+        # question_similarity_scores_start.append(
+        #     (
+        #         f"top k index: {i+1}",
+        #         scores[0][0::2],
+        #     )
+        # )
+        # question_similarity_scores_end.append(
+        #     (
+        #         f"top k index: {i+1}",
+        #         scores[0][1::2],
+        #     )
+        # )
     self_scores = np.vstack(self_scores)
     self_truncated_start_scores = self_scores[:, 0::2]
     self_truncated_end_scores = self_scores[:, 1::2]
-    self_truncated_start_mask = diff_scores_mask(self_truncated_start_scores)
-    self_truncated_end_mask = diff_scores_mask(self_truncated_end_scores)
+    self_truncated_start_mask = diff_scores_mask(
+        self_truncated_start_scores, threshold=0.2 if score == "cos_sim" else 0.7
+    )
+    self_truncated_end_mask = diff_scores_mask(
+        self_truncated_end_scores, threshold=0.2 if score == "cos_sim" else 0.7
+    )
 
-    questions_scores = np.vstack(questions_scores)
-    questions_truncated_start_scores = questions_scores[:, 0::2]
-    questions_truncated_end_scores = questions_scores[:, 1::2]
-    questions_truncated_start_mask = diff_scores_mask(questions_truncated_start_scores)
-    questions_truncated_end_mask = diff_scores_mask(questions_truncated_end_scores)
+    # TODO - decide if to remove question.
+    # questions_scores = np.vstack(questions_scores)
+    # questions_truncated_start_scores = questions_scores[:, 0::2]
+    # questions_truncated_end_scores = questions_scores[:, 1::2]
+    # questions_truncated_start_mask = diff_scores_mask(questions_truncated_start_scores)
+    # questions_truncated_end_mask = diff_scores_mask(questions_truncated_end_scores)
 
     # Optionally, save the self-similarity scores to a file
     save_outputs(
@@ -439,30 +569,34 @@ def drift_filtering(args, tokenizer, model, get_emb, question, contents):
         args.log_name,
         "self_similarity_scores_truncated_end",
     )
-    save_outputs(
-        question_similarity_scores_start,
-        args.log_name,
-        "question_similarity_scores_truncated_start",
-    )
-    save_outputs(
-        question_similarity_scores_end,
-        args.log_name,
-        "question_similarity_scores_truncated_end",
-    )
+    # save_outputs(
+    #     question_similarity_scores_start,
+    #     args.log_name,
+    #     "question_similarity_scores_truncated_start",
+    # )
+    # save_outputs(
+    #     question_similarity_scores_end,
+    #     args.log_name,
+    #     "question_similarity_scores_truncated_end",
+    # )
     topk_contents = contents
-    if args.adv_a_position == "start":
-        # topk_contents = [
-        #     t for t, m in zip(topk_contents, questions_truncated_start_mask) if m
-        # ]
-        topk_contents = [
-            t for t, m in zip(topk_contents, self_truncated_start_mask) if m
-        ]
-    else:
-        # topk_contents = [
-        #     t for t, m in zip(topk_contents, questions_truncated_end_mask) if m
-        # ]
-        topk_contents = [t for t, m in zip(topk_contents, self_truncated_end_mask) if m]
-    return topk_contents
+    # if args.adv_a_position == "start":
+    # topk_contents = [
+    #     t for t, m in zip(topk_contents, questions_truncated_start_mask) if m
+    # ]
+    topk_contents = [t for t, m in zip(topk_contents, self_truncated_start_mask) if m]
+    # else:
+    # topk_contents = [
+    #     t for t, m in zip(topk_contents, questions_truncated_end_mask) if m
+    # ]
+    topk_contents = [t for t, m in zip(topk_contents, self_truncated_end_mask) if m]
+    return (
+        topk_contents,
+        np.max(self_truncated_start_scores, axis=1)
+        - np.min(self_truncated_start_scores, axis=1),
+        np.max(self_truncated_end_scores, axis=1)
+        - np.min(self_truncated_end_scores, axis=1),
+    )
 
 
 def conflict_query(top_ks, questions, llm, sampling_params):

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Define arrays of parameters 
+datasets=('nq' 'hotpotqa' 'msmarco') # 'nq' 'hotpotqa' 'msmarco'
+eval_models_names=("ance") # "contriever" "contriever-ms" "ance"
+scores=('dot' 'cos_sim') # 'dot' 'cos_sim'
+topks=(5 20) # 5 10 20
+
+index=1  # Initialize counter
+
+# Iterate over each combination of parameters
+for dataset in "${datasets[@]}"; do
+  for eval_model_name in "${eval_models_names[@]}"; do
+    for score in "${scores[@]}"; do
+      for topk in "${topks[@]}"; do
+        echo $index
+        # Submit the job with the current set of parameters
+        sbatch --export=DATASET="$dataset",EVAL_MODEL_CODE="$eval_model_name",SCORE="$score",TOPK="$topk" scripts/job_script_extract.sh
+        ((index++))  # Increment counter
+        sleep 1  # Brief pause to be kind to the scheduler
+      done
+    done
+  done
+done
