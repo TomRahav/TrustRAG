@@ -2,13 +2,13 @@
 
 # Define arrays of parameters 
 datasets=('nq' 'hotpotqa' 'msmarco') # 'nq' 'hotpotqa' 'msmarco'
-models_names=("mistralai/Mistral-Nemo-Instruct-2407" "meta-llama/Llama-3.1-8B-Instruct") #  "mistralai/Mistral-Nemo-Instruct-2407" "meta-llama/Llama-3.1-8B-Instruct"
+models_names=('gpt-4o') # "mistralai/Mistral-Nemo-Instruct-2407" "meta-llama/Llama-3.1-8B-Instruct") #  "mistralai/Mistral-Nemo-Instruct-2407" "meta-llama/Llama-3.1-8B-Instruct"
 eval_models_names=("contriever") # "contriever" "contriever-ms" "ance"
-attacks=("none") # "none" "LM_targeted" "hotflip" "pia"
+attacks=("none" "hotflip") # "none" "LM_targeted" "hotflip" "pia"
 removals=('drift' 'kmeans_ngram') # 'none' 'drift' 'kmeans' 'kmeans_ngram' 'all'
 defenses=('none') # 'none' 'conflict' 'astute' 'instruct'
-scores=('cos_sim') # 'dot' 'cos_sim'
-positions=('end') # 'start' 'end'
+scores=('dot' 'cos_sim') # 'dot' 'cos_sim'
+positions=('start' 'end') # 'start' 'end'
 
 
 index=1  # Initialize counter
