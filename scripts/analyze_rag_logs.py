@@ -123,9 +123,13 @@ def clean_and_convert_data(df):
     return df
 
 
-def analyze_and_visualize(df, output_dir="plots"):  # Added output_dir argument
+def analyze_and_visualize(df, output_dir="plots"):
     """
     Performs analysis and generates visualizations.
+    Plots are generated per metric, with one plot for 'dot' score_function and
+    one for 'cos' score_function. Within each plot, experiment groups are
+    ordered by adv_per_query (1,1,1..., then 3,3,3..., then 5,5,5...).
+    X-axis labels are formatted for improved readability.
     """
     print("\n--- Basic Statistics ---")
     print(df.describe().to_string())
@@ -145,7 +149,7 @@ def analyze_and_visualize(df, output_dir="plots"):  # Added output_dir argument
         "dataset",
         "eval_model",
         "model",
-        "score",
+        "score",  # This corresponds to score_function
         "adv_a_position",
         "adv_per_query",
         "M",
@@ -164,21 +168,29 @@ def analyze_and_visualize(df, output_dir="plots"):  # Added output_dir argument
         return
 
     # Identify common experiment setups to ensure fair comparison
-    # This creates a unique identifier for each experiment setup *excluding* the removal method
-    # Use fillna('') to treat NaN as empty string for id creation, ensuring consistent grouping
+    existing_comparison_keys = [
+        key for key in comparison_keys if key in df_filtered_removal.columns
+    ]
+    if not all(key in existing_comparison_keys for key in ["score", "adv_per_query"]):
+        print(
+            "\nCritical error: 'score' or 'adv_per_query' columns are missing from the DataFrame after filtering."
+        )
+        print(
+            "Cannot proceed with experiment_setup_id creation or plotting as specified."
+        )
+        return
+
     df_filtered_removal["experiment_setup_id"] = (
-        df_filtered_removal[comparison_keys]
+        df_filtered_removal[existing_comparison_keys]
         .astype(str)
         .fillna("NA")
         .agg("_".join, axis=1)
     )
 
-    # Count how many removal methods exist for each setup ID
     setup_counts = df_filtered_removal.groupby("experiment_setup_id")[
         "removal"
     ].nunique()
 
-    # Filter for setups that have both 'drift' and 'kmeans_ngram'
     complete_setups = setup_counts[setup_counts == 2].index
     df_comparable = df_filtered_removal[
         df_filtered_removal["experiment_setup_id"].isin(complete_setups)
@@ -194,7 +206,6 @@ def analyze_and_visualize(df, output_dir="plots"):  # Added output_dir argument
         return
 
     print("\n--- Comparison of Drift vs. Kmeans_Ngram (Hotflip Attack) ---")
-    # Group by the defining characteristics and the removal method
     comparison_metrics = [
         "success_injection_rate",
         "correct_answer_pct",
@@ -203,84 +214,142 @@ def analyze_and_visualize(df, output_dir="plots"):  # Added output_dir argument
         "inference_time",
     ]
 
-    # Aggregate and then pivot for clear comparison
-    # Drop rows where all comparison metrics are NaN for a given group to avoid entirely empty comparisons
+    final_comparison_keys = [
+        key for key in comparison_keys if key in df_comparable.columns
+    ]
+
     comparison_summary = (
-        df_comparable.groupby(comparison_keys + ["removal"])[comparison_metrics]
+        df_comparable.groupby(final_comparison_keys + ["removal"])[comparison_metrics]
         .mean()
         .dropna(how="all")
         .unstack(level="removal")
     )
-
     print(comparison_summary.to_string())
 
     # --- Visualizations ---
     print("\n--- Generating Visualizations ---")
-    os.makedirs(
-        output_dir, exist_ok=True
-    )  # Create the output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
     sns.set_style("whitegrid")
 
-    # Plotting loop for key metrics
+    if "score" not in df_comparable.columns:
+        print(
+            "Error: 'score' column (for score_function) not found in df_comparable. Cannot generate split plots."
+        )
+        return
+    if "adv_per_query" not in df_comparable.columns:
+        print(
+            "Error: 'adv_per_query' column not found in df_comparable. Cannot generate split plots."
+        )
+        return
+
+    score_function_values_to_iterate = ["dot", "cos"]
+
+    # Define the sort keys. 'adv_per_query' is now prioritized to achieve 1,1,..,3,3,..,5,5.. ordering.
+    # 'score' is also included because plots are filtered by it later.
+    sort_keys = ["adv_per_query", "score", "dataset", "model", "adv_a_position"]
+    existing_sort_keys = [key for key in sort_keys if key in df_comparable.columns]
+
+    if not existing_sort_keys or "adv_per_query" not in existing_sort_keys:
+        print(
+            "Error: Not all necessary sort keys (especially 'adv_per_query') exist in df_comparable. Cannot proceed with sorting for plots."
+        )
+        return
+    if len(existing_sort_keys) != len(sort_keys):
+        print(
+            f"Warning: Not all specified sort keys ({sort_keys}) exist in df_comparable. Using existing: {existing_sort_keys}"
+        )
+
+    # Sort df_comparable once. This sorted version will be filtered for each plot.
+    # The sort order is crucial for the desired x-axis grouping.
+    df_comparable_sorted = df_comparable.sort_values(by=existing_sort_keys)
+
+    # Helper function to create formatted labels for x-axis
+    def create_display_label(row):
+        # Ensure all expected columns for labeling are present in the row's index
+        # This is important because df_plot_data is a slice and might not always have M or repeat if they were all NaN
+        label_parts = []
+        if "dataset" in row.index:
+            label_parts.append(f"D:{row['dataset']}")
+        if "model" in row.index:
+            label_parts.append(f"M:{row['model']}")
+        if "adv_a_position" in row.index:
+            label_parts.append(f"P:{row['adv_a_position']}")
+
+        # Conditional parts: Mval and R
+        # Check if column exists in the row's Series index AND if the value is not NaN
+        # if "M" in row.index and pd.notna(row["M"]):
+        #     label_parts.append(f"Mval:{row['M']}")
+        # if "repeat" in row.index and pd.notna(row["repeat"]):
+        #     label_parts.append(f"R:{row['repeat']}")
+
+        if "adv_per_query" in row.index:
+            label_parts.append(f"APQ:{row['adv_per_query']}")
+
+        return " ".join(label_parts)
+
     for metric in comparison_metrics:
-        # Check if the metric column has any non-NaN data before plotting
-        if df_comparable[metric].dropna().empty:
+        if (
+            metric not in df_comparable_sorted.columns
+            or df_comparable_sorted[metric].dropna().empty
+        ):
             print(
-                f"Skipping plot for '{metric}' as all values are missing in comparable data."
+                f"Skipping plots for '{metric}' as the column is missing or all values are missing in comparable data."
             )
             continue
 
-        plt.figure(figsize=(14, 7))
-        # Ensure a unique identifier for each x-axis group, e.g., combining dataset and model
-        df_comparable["display_group"] = (
-            df_comparable["dataset"]
-            + "-"
-            + df_comparable["model"]
-            + "-"
-            + df_comparable["score"]
-            + "-"
-            + df_comparable["adv_a_position"]
-            + "-"
-            + df_comparable["adv_per_query"].astype(str)
-            + (
-                ("-M" + df_comparable["M"].astype(str))
-                if "M" in df_comparable.columns and df_comparable["M"].notna().any()
-                else ""
+        for sf_value in score_function_values_to_iterate:
+            # Filter data for the current score_function
+            # The data is already sorted correctly by adv_per_query and then other keys.
+            df_plot_data = df_comparable_sorted[
+                df_comparable_sorted["score"] == sf_value
+            ].copy()
+
+            if df_plot_data.empty:
+                # print(f"No data for metric '{metric}', score_function '{sf_value}'. Skipping plot.")
+                continue
+
+            plt.figure(
+                figsize=(15, 7)
+            )  # Adjusted figsize for potentially more x-axis groups
+
+            # Create a display group for the x-axis using the helper function.
+            df_plot_data["plot_specific_display_group"] = df_plot_data.apply(
+                create_display_label, axis=1
             )
-            + (
-                ("-R" + df_comparable["repeat"].astype(str))
-                if "repeat" in df_comparable.columns
-                and df_comparable["repeat"].notna().any()
-                else ""
+
+            # sns.barplot will use the order from df_plot_data, which is already sorted
+            # by existing_sort_keys (adv_per_query first, then score, then others).
+
+            sns.barplot(
+                x="plot_specific_display_group",
+                y=metric,
+                hue="removal",
+                data=df_plot_data,  # Use the filtered and pre-sorted data
+                palette={"drift": "skyblue", "kmeans_ngram": "salmon"},
             )
-        )
 
-        # Sort for better visualization
-        df_comparable_sorted = df_comparable.sort_values(
-            by=["dataset", "model", "score", "adv_a_position"]
-        )
+            title_metric_name = metric.replace("_", " ").title()
+            plt.title(
+                f"{title_metric_name} (Hotflip) for Score Func: {sf_value}\n(X-axis groups ordered by Adv per Query: 1s, then 3s, then 5s)"
+            )
+            plt.xlabel(
+                "Experiment Group (Dataset-Model-AdvPos-Mval-R-AdvPerQuery)"
+            )  # Updated to reflect label components
+            plt.ylabel(title_metric_name)
+            plt.xticks(rotation=75, ha="right", fontsize=8)
+            plt.legend(title="Removal Method")
+            plt.tight_layout()
 
-        sns.barplot(
-            x="display_group",
-            y=metric,
-            hue="removal",
-            data=df_comparable_sorted,
-            palette={"drift": "skyblue", "kmeans_ngram": "salmon"},
-        )
-        plt.title(
-            f'Comparison of Mean {metric.replace("_", " ").title()} by Removal Method (Hotflip Attack)'
-        )
-        plt.xlabel("Experiment Group (Dataset-Model-Score-AdvPosition-AdvPerQuery...)")
-        plt.ylabel(metric.replace("_", " ").title())
-        plt.xticks(rotation=90, fontsize=8)
-        plt.legend(title="Removal Method")
-        plt.tight_layout()
-
-        # Save the plot instead of showing it
-        plot_filename = os.path.join(output_dir, f"{metric}_comparison.png")
-        plt.savefig(plot_filename)
-        print(f"Saved plot to {plot_filename}")
-        plt.close()  # Close the plot to free up memory
+            plot_filename = os.path.join(
+                output_dir, f"{metric}_score_{sf_value}.png"
+            )  # Filename reflects the score_function
+            try:
+                plt.savefig(plot_filename)
+                print(f"Saved plot to {plot_filename}")
+            except Exception as e:
+                print(f"Error saving plot {plot_filename}: {e}")
+            plt.close()
+    print("\n--- Finished Generating Visualizations ---")
 
 
 def main():
