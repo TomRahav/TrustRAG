@@ -126,9 +126,16 @@ def clean_and_convert_data(df):
 def analyze_and_visualize(df, output_dir="plots"):
     """
     Performs analysis and generates visualizations.
-    Plots are generated per metric, with one plot for 'dot' score_function and
-    one for 'cos' score_function. Within each plot, experiment groups are
-    ordered by adv_per_query (1,1,1..., then 3,3,3..., then 5,5,5...).
+    Plots are generated per metric:
+    1. Comparison plots for 'drift' vs 'kmeans_ngram' removal methods,
+       under 'hotflip' attack, split by 'dot' and 'cos' score_functions.
+       X-axis groups ordered by adv_per_query (1s, then 3s, then 5s).
+    2. Plots for 'all' removal method (no context/baseline) under 'hotflip' attack,
+       split by 'dot' and 'cos' score_functions.
+       X-axis groups ordered by adv_per_query (1s, then 3s, then 5s).
+    3. Plots for 'none' attack scenarios (no adversarial attack),
+       split by 'dot' and 'cos' score_functions, showing different removal methods if present.
+       X-axis groups ordered by adv_per_query (1s, then 3s, then 5s).
     X-axis labels are formatted for improved readability.
     """
     print("\n--- Basic Statistics ---")
@@ -137,219 +144,446 @@ def analyze_and_visualize(df, output_dir="plots"):
     print("\n--- Missing Values ---")
     print(df.isnull().sum())
 
-    # Focus on 'hotflip' attack for comparison
+    # Define helper function for x-axis labels globally for all plotting parts
+    def create_display_label(row):
+        label_parts = []
+        if "dataset" in row.index and pd.notna(row["dataset"]):
+            label_parts.append(f"D:{row['dataset']}")
+        if "model" in row.index and pd.notna(row["model"]):
+            label_parts.append(f"M:{row['model']}")
+        if "adv_a_position" in row.index and pd.notna(row["adv_a_position"]):
+            label_parts.append(f"P:{row['adv_a_position']}")
+        if "M" in row.index and pd.notna(row["M"]):
+            label_parts.append(f"Mval:{row['M']}")
+        if "repeat" in row.index and pd.notna(row["repeat"]):
+            label_parts.append(f"R:{row['repeat']}")
+        if "adv_per_query" in row.index and pd.notna(row["adv_per_query"]):
+            label_parts.append(f"APQ:{row['adv_per_query']}")
+        # For "no attack" plots, we might also want to show the removal method in the label if not using hue
+        # However, the current design uses hue if multiple removals, or implies 'all' or a single one if not.
+        # So, 'removal' is not typically part of this label string.
+        return " ".join(label_parts)
+
+    # Focus on 'hotflip' attack for comparison in Part 1 and Part 2
     df_hotflip = df[df["attack"] == "hotflip"].copy()
 
     if df_hotflip.empty:
-        print("\nNo 'hotflip' attack data found for comparison.")
-        return
-
-    # Group by relevant columns to compare removal methods
-    comparison_keys = [
-        "dataset",
-        "eval_model",
-        "model",
-        "score",  # This corresponds to score_function
-        "adv_a_position",
-        "adv_per_query",
-        "M",
-        "repeat",
-        "no_questions",
-        "both_sides",
-    ]
-
-    # Filter for only 'drift' and 'kmeans_ngram' removal methods
-    df_filtered_removal = df_hotflip[
-        df_hotflip["removal"].isin(["drift", "kmeans_ngram"])
-    ].copy()
-
-    if df_filtered_removal.empty:
-        print("\nNo 'drift' or 'kmeans_ngram' removal data for 'hotflip' attack found.")
-        return
-
-    # Identify common experiment setups to ensure fair comparison
-    existing_comparison_keys = [
-        key for key in comparison_keys if key in df_filtered_removal.columns
-    ]
-    if not all(key in existing_comparison_keys for key in ["score", "adv_per_query"]):
         print(
-            "\nCritical error: 'score' or 'adv_per_query' columns are missing from the DataFrame after filtering."
+            "\nNo 'hotflip' attack data found. Skipping Part 1 and Part 2 visualizations."
         )
+    else:
+        # --- Part 1: Comparison of 'drift' vs 'kmeans_ngram' under 'hotflip' attack ---
         print(
-            "Cannot proceed with experiment_setup_id creation or plotting as specified."
-        )
-        return
-
-    df_filtered_removal["experiment_setup_id"] = (
-        df_filtered_removal[existing_comparison_keys]
-        .astype(str)
-        .fillna("NA")
-        .agg("_".join, axis=1)
-    )
-
-    setup_counts = df_filtered_removal.groupby("experiment_setup_id")[
-        "removal"
-    ].nunique()
-
-    complete_setups = setup_counts[setup_counts == 2].index
-    df_comparable = df_filtered_removal[
-        df_filtered_removal["experiment_setup_id"].isin(complete_setups)
-    ].copy()
-
-    if df_comparable.empty:
-        print(
-            "\nNo complete pairs of 'drift' and 'kmeans_ngram' experiments found for comparison."
-        )
-        print(
-            "Consider checking if all relevant columns (M, repeat, no_questions, both_sides) are correctly extracted and present."
-        )
-        return
-
-    print("\n--- Comparison of Drift vs. Kmeans_Ngram (Hotflip Attack) ---")
-    comparison_metrics = [
-        "success_injection_rate",
-        "correct_answer_pct",
-        "false_removal_rate",
-        "success_removal_rate",
-        "inference_time",
-    ]
-
-    final_comparison_keys = [
-        key for key in comparison_keys if key in df_comparable.columns
-    ]
-
-    comparison_summary = (
-        df_comparable.groupby(final_comparison_keys + ["removal"])[comparison_metrics]
-        .mean()
-        .dropna(how="all")
-        .unstack(level="removal")
-    )
-    print(comparison_summary.to_string())
-
-    # --- Visualizations ---
-    print("\n--- Generating Visualizations ---")
-    os.makedirs(output_dir, exist_ok=True)
-    sns.set_style("whitegrid")
-
-    if "score" not in df_comparable.columns:
-        print(
-            "Error: 'score' column (for score_function) not found in df_comparable. Cannot generate split plots."
-        )
-        return
-    if "adv_per_query" not in df_comparable.columns:
-        print(
-            "Error: 'adv_per_query' column not found in df_comparable. Cannot generate split plots."
-        )
-        return
-
-    score_function_values_to_iterate = ["dot", "cos"]
-
-    # Define the sort keys. 'adv_per_query' is now prioritized to achieve 1,1,..,3,3,..,5,5.. ordering.
-    # 'score' is also included because plots are filtered by it later.
-    sort_keys = ["adv_per_query", "score", "dataset", "model", "adv_a_position"]
-    existing_sort_keys = [key for key in sort_keys if key in df_comparable.columns]
-
-    if not existing_sort_keys or "adv_per_query" not in existing_sort_keys:
-        print(
-            "Error: Not all necessary sort keys (especially 'adv_per_query') exist in df_comparable. Cannot proceed with sorting for plots."
-        )
-        return
-    if len(existing_sort_keys) != len(sort_keys):
-        print(
-            f"Warning: Not all specified sort keys ({sort_keys}) exist in df_comparable. Using existing: {existing_sort_keys}"
+            "\n--- Analyzing 'drift' vs 'kmeans_ngram' removal methods (Hotflip Attack) ---"
         )
 
-    # Sort df_comparable once. This sorted version will be filtered for each plot.
-    # The sort order is crucial for the desired x-axis grouping.
-    df_comparable_sorted = df_comparable.sort_values(by=existing_sort_keys)
+        comparison_keys = [
+            "dataset",
+            "eval_model",
+            "model",
+            "score",
+            "adv_a_position",
+            "adv_per_query",
+            "M",
+            "repeat",
+            "no_questions",
+            "both_sides",
+        ]
+        df_filtered_removal_comparison = df_hotflip[
+            df_hotflip["removal"].isin(["drift", "kmeans_ngram"])
+        ].copy()
 
-    # Helper function to create formatted labels for x-axis
-    def create_display_label(row):
-        # Ensure all expected columns for labeling are present in the row's index
-        # This is important because df_plot_data is a slice and might not always have M or repeat if they were all NaN
-        label_parts = []
-        if "dataset" in row.index:
-            label_parts.append(f"D:{row['dataset']}")
-        if "model" in row.index:
-            label_parts.append(f"M:{row['model']}")
-        if "adv_a_position" in row.index:
-            label_parts.append(f"P:{row['adv_a_position']}")
+        if df_filtered_removal_comparison.empty:
+            print(
+                "\nNo 'drift' or 'kmeans_ngram' removal data for 'hotflip' attack found for comparison plots."
+            )
+        else:
+            existing_comparison_keys_comp = [
+                key
+                for key in comparison_keys
+                if key in df_filtered_removal_comparison.columns
+            ]
+            if not all(
+                key in existing_comparison_keys_comp
+                for key in ["score", "adv_per_query"]
+            ):
+                print(
+                    "\nCritical error for comparison plots: 'score' or 'adv_per_query' columns are missing."
+                )
+            else:
+                df_filtered_removal_comparison["experiment_setup_id"] = (
+                    df_filtered_removal_comparison[existing_comparison_keys_comp]
+                    .astype(str)
+                    .fillna("NA")
+                    .agg("_".join, axis=1)
+                )
+                setup_counts = df_filtered_removal_comparison.groupby(
+                    "experiment_setup_id"
+                )["removal"].nunique()
+                complete_setups = setup_counts[setup_counts == 2].index
+                df_comparable = df_filtered_removal_comparison[
+                    df_filtered_removal_comparison["experiment_setup_id"].isin(
+                        complete_setups
+                    )
+                ].copy()
 
-        # Conditional parts: Mval and R
-        # Check if column exists in the row's Series index AND if the value is not NaN
-        # if "M" in row.index and pd.notna(row["M"]):
-        #     label_parts.append(f"Mval:{row['M']}")
-        # if "repeat" in row.index and pd.notna(row["repeat"]):
-        #     label_parts.append(f"R:{row['repeat']}")
+                if df_comparable.empty:
+                    print(
+                        "\nNo complete pairs of 'drift' and 'kmeans_ngram' experiments found for comparison."
+                    )
+                else:
+                    print(
+                        "\n--- Comparison Summary: Drift vs. Kmeans_Ngram (Hotflip Attack) ---"
+                    )
+                    comparison_metrics = [
+                        "success_injection_rate",
+                        "correct_answer_pct",
+                        "false_removal_rate",
+                        "success_removal_rate",
+                        "inference_time",
+                    ]
+                    final_comparison_keys_comp = [
+                        key for key in comparison_keys if key in df_comparable.columns
+                    ]
+                    comparison_summary = (
+                        df_comparable.groupby(final_comparison_keys_comp + ["removal"])[
+                            comparison_metrics
+                        ]
+                        .mean()
+                        .dropna(how="all")
+                        .unstack(level="removal")
+                    )
+                    print(comparison_summary.to_string())
 
-        if "adv_per_query" in row.index:
-            label_parts.append(f"APQ:{row['adv_per_query']}")
+                    print(
+                        "\n--- Generating Visualizations for 'drift' vs 'kmeans_ngram' (Hotflip Attack) ---"
+                    )
+                    os.makedirs(output_dir, exist_ok=True)
+                    sns.set_style("whitegrid")
+                    if (
+                        "score" not in df_comparable.columns
+                        or "adv_per_query" not in df_comparable.columns
+                    ):
+                        print(
+                            "Error: 'score' or 'adv_per_query' missing in df_comparable for comparison plots."
+                        )
+                    else:
+                        score_function_values_to_iterate = ["dot", "cos"]
+                        sort_keys_comp = [
+                            "adv_per_query",
+                            "score",
+                            "dataset",
+                            "model",
+                            "adv_a_position",
+                        ]
+                        existing_sort_keys_comp = [
+                            key
+                            for key in sort_keys_comp
+                            if key in df_comparable.columns
+                        ]
+                        if (
+                            not existing_sort_keys_comp
+                            or "adv_per_query" not in existing_sort_keys_comp
+                        ):
+                            print(
+                                "Error: Necessary sort keys missing for df_comparable."
+                            )
+                        else:
+                            df_comparable_sorted = df_comparable.sort_values(
+                                by=existing_sort_keys_comp
+                            )
+                            for metric in comparison_metrics:
+                                if (
+                                    metric not in df_comparable_sorted.columns
+                                    or df_comparable_sorted[metric].dropna().empty
+                                ):
+                                    print(
+                                        f"Skipping comparison plot for '{metric}': missing or all NaN."
+                                    )
+                                    continue
+                                for sf_value in score_function_values_to_iterate:
+                                    df_plot_data_comp = df_comparable_sorted[
+                                        df_comparable_sorted["score"] == sf_value
+                                    ].copy()
+                                    if df_plot_data_comp.empty:
+                                        continue
+                                    plt.figure(figsize=(15, 7))
+                                    df_plot_data_comp["plot_specific_display_group"] = (
+                                        df_plot_data_comp.apply(
+                                            create_display_label, axis=1
+                                        )
+                                    )
+                                    sns.barplot(
+                                        x="plot_specific_display_group",
+                                        y=metric,
+                                        hue="removal",
+                                        data=df_plot_data_comp,
+                                        palette={
+                                            "drift": "skyblue",
+                                            "kmeans_ngram": "salmon",
+                                        },
+                                    )
+                                    title_metric_name = metric.replace("_", " ").title()
+                                    plt.title(
+                                        f"{title_metric_name} (Hotflip Attack) Comparison\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
+                                    )
+                                    plt.xlabel(
+                                        "Experiment Group (D:Dataset M:Model P:AdvPos Mval:M R:Repeat APQ:AdvPerQuery)"
+                                    )
+                                    plt.ylabel(title_metric_name)
+                                    plt.xticks(rotation=75, ha="right", fontsize=8)
+                                    plt.legend(title="Removal Method")
+                                    plt.tight_layout()
+                                    plot_filename = os.path.join(
+                                        output_dir,
+                                        f"comparison_{metric}_score_{sf_value}.png",
+                                    )
+                                    try:
+                                        plt.savefig(plot_filename)
+                                        print(f"Saved plot to {plot_filename}")
+                                    except Exception as e:
+                                        print(f"Error saving plot {plot_filename}: {e}")
+                                    plt.close()
 
-        return " ".join(label_parts)
+        # --- Part 2: Analysis of 'all' removal method (no context/baseline) under 'hotflip' attack ---
+        print("\n--- Analyzing 'all' removal method (Hotflip Attack) ---")
+        df_all_removal_hotflip = df[df["removal"] == "all"].copy()
 
-    for metric in comparison_metrics:
+        if df_all_removal_hotflip.empty:
+            print(
+                "\nNo data found for 'all' removal method under 'hotflip' attack. Skipping these plots."
+            )
+        else:
+            if (
+                "score" not in df_all_removal_hotflip.columns
+                or "adv_per_query" not in df_all_removal_hotflip.columns
+            ):
+                print(
+                    "Error: 'score' or 'adv_per_query' missing in df_all_removal_hotflip. Skipping 'all' removal plots for hotflip attack."
+                )
+            else:
+                metrics_for_all_plots = [
+                    "success_injection_rate",
+                    "correct_answer_pct",
+                    "inference_time",
+                ]
+                metrics_for_all_plots = [
+                    m
+                    for m in metrics_for_all_plots
+                    if m in df_all_removal_hotflip.columns
+                ]
+                print(
+                    "\n--- Generating Visualizations for 'all' removal method (Hotflip Attack) ---"
+                )
+                os.makedirs(output_dir, exist_ok=True)
+                sns.set_style("whitegrid")
+                score_function_values_to_iterate = ["dot", "cos"]
+                sort_keys_all_hotflip = [
+                    "adv_per_query",
+                    "score",
+                    "dataset",
+                    "model",
+                    "adv_a_position",
+                ]
+                existing_sort_keys_all_hotflip = [
+                    key
+                    for key in sort_keys_all_hotflip
+                    if key in df_all_removal_hotflip.columns
+                ]
+                if (
+                    not existing_sort_keys_all_hotflip
+                    or "adv_per_query" not in existing_sort_keys_all_hotflip
+                ):
+                    print(
+                        "Error: Necessary sort keys missing for df_all_removal_hotflip."
+                    )
+                else:
+                    df_all_removal_hotflip_sorted = df_all_removal_hotflip.sort_values(
+                        by=existing_sort_keys_all_hotflip
+                    )
+                    for metric in metrics_for_all_plots:
+                        if (
+                            metric not in df_all_removal_hotflip_sorted.columns
+                            or df_all_removal_hotflip_sorted[metric].dropna().empty
+                        ):
+                            print(
+                                f"Skipping 'all' removal (hotflip) plot for '{metric}': missing or all NaN."
+                            )
+                            continue
+                        for sf_value in score_function_values_to_iterate:
+                            df_plot_data_all_hf = df_all_removal_hotflip_sorted[
+                                df_all_removal_hotflip_sorted["score"] == sf_value
+                            ].copy()
+                            if df_plot_data_all_hf.empty:
+                                continue
+                            plt.figure(figsize=(15, 7))
+                            df_plot_data_all_hf["plot_specific_display_group"] = (
+                                df_plot_data_all_hf.apply(create_display_label, axis=1)
+                            )
+                            sns.barplot(
+                                x="plot_specific_display_group",
+                                y=metric,
+                                data=df_plot_data_all_hf,
+                                color="gray",
+                            )
+                            title_metric_name = metric.replace("_", " ").title()
+                            plt.title(
+                                f"{title_metric_name} (Hotflip Attack) - Removal: All\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
+                            )
+                            plt.xlabel(
+                                "Experiment Group (D:Dataset M:Model P:AdvPos Mval:M R:Repeat APQ:AdvPerQuery)"
+                            )
+                            plt.ylabel(title_metric_name)
+                            plt.xticks(rotation=75, ha="right", fontsize=8)
+                            plt.tight_layout()
+                            plot_filename = os.path.join(
+                                output_dir,
+                                f"hotflip_all_removal_{metric}_score_{sf_value}.png",
+                            )
+                            try:
+                                plt.savefig(plot_filename)
+                                print(f"Saved plot to {plot_filename}")
+                            except Exception as e:
+                                print(f"Error saving plot {plot_filename}: {e}")
+                            plt.close()
+
+    # --- Part 3: Analysis of 'none' attack scenarios ---
+    print("\n--- Analyzing 'none' attack scenarios (No Attack Baseline) ---")
+    # Use the original df, not df_hotflip
+    df_no_attack = df[df["attack"] == "none"].copy()
+
+    if df_no_attack.empty:
+        print("\nNo data found for 'none' attack scenarios. Skipping these plots.")
+    else:
         if (
-            metric not in df_comparable_sorted.columns
-            or df_comparable_sorted[metric].dropna().empty
+            "score" not in df_no_attack.columns
+            or "adv_per_query" not in df_no_attack.columns
         ):
             print(
-                f"Skipping plots for '{metric}' as the column is missing or all values are missing in comparable data."
+                "Error: 'score' or 'adv_per_query' missing in df_no_attack. Skipping 'none' attack plots."
             )
-            continue
+        else:
+            metrics_for_no_attack_plots = [
+                "correct_answer_pct",
+                "false_removal_rate",  # Interesting if removal methods are active
+                "inference_time",
+                "success_injection_rate",  # Should be 0 or NaN, but can include for completeness
+            ]
+            metrics_for_no_attack_plots = [
+                m for m in metrics_for_no_attack_plots if m in df_no_attack.columns
+            ]
 
-        for sf_value in score_function_values_to_iterate:
-            # Filter data for the current score_function
-            # The data is already sorted correctly by adv_per_query and then other keys.
-            df_plot_data = df_comparable_sorted[
-                df_comparable_sorted["score"] == sf_value
-            ].copy()
+            print("\n--- Generating Visualizations for 'none' attack scenarios ---")
+            os.makedirs(output_dir, exist_ok=True)
+            sns.set_style("whitegrid")
+            score_function_values_to_iterate = ["dot", "cos"]
+            sort_keys_no_attack = [
+                "adv_per_query",
+                "score",
+                "dataset",
+                "model",
+                "adv_a_position",
+                "removal",
+            ]
+            existing_sort_keys_no_attack = [
+                key for key in sort_keys_no_attack if key in df_no_attack.columns
+            ]
 
-            if df_plot_data.empty:
-                # print(f"No data for metric '{metric}', score_function '{sf_value}'. Skipping plot.")
-                continue
+            if (
+                not existing_sort_keys_no_attack
+                or "adv_per_query" not in existing_sort_keys_no_attack
+            ):
+                print(
+                    "Error: Necessary sort keys missing for df_no_attack. Skipping 'none' attack plots."
+                )
+            else:
+                df_no_attack_sorted = df_no_attack.sort_values(
+                    by=existing_sort_keys_no_attack
+                )
 
-            plt.figure(
-                figsize=(15, 7)
-            )  # Adjusted figsize for potentially more x-axis groups
+                for metric in metrics_for_no_attack_plots:
+                    if (
+                        metric not in df_no_attack_sorted.columns
+                        or df_no_attack_sorted[metric].dropna().empty
+                    ):
+                        print(
+                            f"Skipping 'none' attack plot for '{metric}': missing or all NaN."
+                        )
+                        continue
+                    for sf_value in score_function_values_to_iterate:
+                        df_plot_data_no_attack = df_no_attack_sorted[
+                            df_no_attack_sorted["score"] == sf_value
+                        ].copy()
+                        if df_plot_data_no_attack.empty:
+                            continue
 
-            # Create a display group for the x-axis using the helper function.
-            df_plot_data["plot_specific_display_group"] = df_plot_data.apply(
-                create_display_label, axis=1
-            )
+                        plt.figure(figsize=(15, 7))
+                        df_plot_data_no_attack["plot_specific_display_group"] = (
+                            df_plot_data_no_attack.apply(create_display_label, axis=1)
+                        )
 
-            # sns.barplot will use the order from df_plot_data, which is already sorted
-            # by existing_sort_keys (adv_per_query first, then score, then others).
+                        num_removal_methods = df_plot_data_no_attack[
+                            "removal"
+                        ].nunique()
+                        title_metric_name = metric.replace("_", " ").title()
 
-            sns.barplot(
-                x="plot_specific_display_group",
-                y=metric,
-                hue="removal",
-                data=df_plot_data,  # Use the filtered and pre-sorted data
-                palette={"drift": "skyblue", "kmeans_ngram": "salmon"},
-            )
+                        if num_removal_methods > 1:
+                            # Dynamically create a palette if multiple removal methods are present
+                            unique_removals = df_plot_data_no_attack["removal"].unique()
+                            # Simple palette generation, can be made more sophisticated
+                            palette_no_attack = sns.color_palette(
+                                "viridis", n_colors=len(unique_removals)
+                            )
+                            removal_palette_map = dict(
+                                zip(unique_removals, palette_no_attack)
+                            )
 
-            title_metric_name = metric.replace("_", " ").title()
-            plt.title(
-                f"{title_metric_name} (Hotflip) for Score Func: {sf_value}\n(X-axis groups ordered by Adv per Query: 1s, then 3s, then 5s)"
-            )
-            plt.xlabel(
-                "Experiment Group (Dataset-Model-AdvPos-Mval-R-AdvPerQuery)"
-            )  # Updated to reflect label components
-            plt.ylabel(title_metric_name)
-            plt.xticks(rotation=75, ha="right", fontsize=8)
-            plt.legend(title="Removal Method")
-            plt.tight_layout()
+                            sns.barplot(
+                                x="plot_specific_display_group",
+                                y=metric,
+                                hue="removal",
+                                data=df_plot_data_no_attack,
+                                palette=removal_palette_map,
+                            )
+                            plt.legend(title="Removal Method")
+                            plt.title(
+                                f"{title_metric_name} (No Attack)\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
+                            )
+                        else:
+                            # If only one removal method (or all are the same, e.g., 'all'), use a single color
+                            # Get the single removal method name for the title if needed
+                            single_removal_method_name = (
+                                df_plot_data_no_attack["removal"].iloc[0]
+                                if not df_plot_data_no_attack.empty
+                                else "Unknown"
+                            )
+                            sns.barplot(
+                                x="plot_specific_display_group",
+                                y=metric,
+                                data=df_plot_data_no_attack,
+                                color="mediumseagreen",
+                            )  # Different color for no attack
+                            plt.title(
+                                f"{title_metric_name} (No Attack) - Removal: {single_removal_method_name}\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
+                            )
 
-            plot_filename = os.path.join(
-                output_dir, f"{metric}_score_{sf_value}.png"
-            )  # Filename reflects the score_function
-            try:
-                plt.savefig(plot_filename)
-                print(f"Saved plot to {plot_filename}")
-            except Exception as e:
-                print(f"Error saving plot {plot_filename}: {e}")
-            plt.close()
-    print("\n--- Finished Generating Visualizations ---")
+                        plt.xlabel(
+                            "Experiment Group (D:Dataset M:Model P:AdvPos Mval:M R:Repeat APQ:AdvPerQuery)"
+                        )
+                        plt.ylabel(title_metric_name)
+                        plt.xticks(rotation=75, ha="right", fontsize=8)
+                        plt.tight_layout()
+                        plot_filename = os.path.join(
+                            output_dir, f"no_attack_{metric}_score_{sf_value}.png"
+                        )
+                        try:
+                            plt.savefig(plot_filename)
+                            print(f"Saved plot to {plot_filename}")
+                        except Exception as e:
+                            print(f"Error saving plot {plot_filename}: {e}")
+                        plt.close()
+
+    print("\n--- Finished Generating All Visualizations ---")
 
 
 def main():
