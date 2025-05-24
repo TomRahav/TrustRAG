@@ -36,14 +36,15 @@ from src.gpt4_model import GPT
 import time
 from contextlib import contextmanager
 from dotenv import load_dotenv
-from huggingface_hub import login
+
+# from huggingface_hub import login
 
 total_time = 0
 
 
 load_dotenv()
 # Method 2: Use huggingface_hub login
-login(token=os.environ["HF_API_KEY"])
+# login(token=os.environ["HF_API_KEY"])
 
 
 @contextmanager
@@ -193,15 +194,14 @@ def main():
     with open(args.orig_beir_results, "r") as f:
         results = json.load(f)
 
-    if args.attack_method not in ["none"]:
-        logger.info(f"Attack method: {args.attack_method}")
-        # Load retrieval models
-        logger.info("load retrieval models")
-        model, c_model, tokenizer, get_emb = load_models(args.eval_model_code)
-        model.eval()
-        model.to(device)
-        c_model.eval()
-        c_model.to(device)
+    logger.info(f"Attack method: {args.attack_method}")
+    # Load retrieval models
+    logger.info("load retrieval models")
+    model, c_model, tokenizer, get_emb = load_models(args.eval_model_code)
+    model.eval()
+    model.to(device)
+    c_model.eval()
+    c_model.to(device)
 
     query_prompts = []
     questions = []
@@ -337,27 +337,27 @@ def main():
                     topk_contents.append(pia_attack)
                     adv_text_set = [pia_attack]
                 sorted_contents.append(topk_contents.copy())
-                if (
-                    args.removal_method in ["drift", "kmeans", "kmeans_ngram"]
-                ) and args.top_k != 1:
-                    with timed(f"Iter_{iter}_question_{i}_removal"):
-                        if args.removal_method == "drift":
-                            topk_contents = drift_filtering(
-                                args,
-                                tokenizer,
-                                model,
-                                get_emb,
-                                question,
-                                topk_contents,
-                                args.score_function,
-                            )
-                        else:
-                            topk_contents = k_mean_filtering(
-                                embedding_tokenizer,
-                                embedding_model,
-                                topk_contents,
-                                "ngram" in args.removal_method,
-                            )
+            if (
+                args.removal_method in ["drift", "kmeans", "kmeans_ngram"]
+            ) and args.top_k != 1:
+                with timed(f"Iter_{iter}_question_{i}_removal"):
+                    if args.removal_method == "drift":
+                        topk_contents = drift_filtering(
+                            args,
+                            tokenizer,
+                            model,
+                            get_emb,
+                            question,
+                            topk_contents,
+                            args.score_function,
+                        )
+                    else:
+                        topk_contents = k_mean_filtering(
+                            embedding_tokenizer,
+                            embedding_model,
+                            topk_contents,
+                            "ngram" in args.removal_method,
+                        )
             if args.removal_method == "all":
                 topk_contents = []
             if topk_contents:
@@ -496,6 +496,7 @@ def main():
                     for query in progress_bar(
                         query_prompts, desc="Processing query prompts"
                     ):
+                        time.sleep(0.1)
                         final_answers.append(llm.query(query))
                 else:
                     raise ValueError(f"Invalid defend method: {args.defend_method}")

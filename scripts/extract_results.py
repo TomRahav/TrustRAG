@@ -51,8 +51,8 @@ for root, dirs, files in os.walk(f"/home/tom.rahav/TrustRAG/{dir}"):
                         "adv_per_query": r"adv_per_query(\d+)",
                         "M": r"-M(\d+)",
                         "repeat": r"Repeat(\d+)",
-                        "no_questions": r"no_questions",
-                        "both_sides": r"both_sides",
+                        # "no_questions": r"no_questions",
+                        # "both_sides": r"both_sides",
                     }
                     for key, pattern in patterns.items():
                         match = re.search(pattern, experiment_name)
@@ -70,8 +70,8 @@ for root, dirs, files in os.walk(f"/home/tom.rahav/TrustRAG/{dir}"):
                         "attack",
                         "adv_a_position",
                         "removal",
-                        "no_questions",
-                        "both_sides",
+                        # "no_questions",
+                        # "both_sides",
                         "defense",
                         "adv_per_query",
                         "M",
@@ -99,8 +99,8 @@ headers = [
     "adv_per_query",
     "M",
     "repeat",
-    "no_questions",
-    "both_sides",
+    # "no_questions",
+    # "both_sides",
 ] + list(desired_patterns.keys())
 
 # Write the extracted data to a CSV file

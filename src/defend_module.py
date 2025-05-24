@@ -118,7 +118,7 @@ def k_mean_filtering(embedding_tokenizer, embedding_model, topk_contents, n_gram
             if n_gram_flag == 1:
                 break
         if not n_gram_flag:
-            return embedding_topk, topk_contents
+            return topk_contents
 
     scaler = StandardScaler()
     embedding_topk_norm = scaler.fit_transform(embedding_topk)
