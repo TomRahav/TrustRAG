@@ -33,7 +33,7 @@ repeat_times=10
 M=10                            # number of queries
 split="test"
 top_k=5
-adv_per_query=3                # poison rate = adv_per_query / top_k
+adv_per_query=3              # poison rate = adv_per_query / top_k
 llm_flag=true
 llm_arg=""
 if $llm_flag; then

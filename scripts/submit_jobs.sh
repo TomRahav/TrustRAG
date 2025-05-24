@@ -7,8 +7,8 @@ eval_models_names=("contriever") # "contriever" "contriever-ms" "ance"
 attacks=("none") # "none" "LM_targeted" "hotflip" "pia"
 removals=('drift' 'kmeans_ngram') # 'none' 'drift' 'kmeans' 'kmeans_ngram' 'all'
 defenses=('none') # 'none' 'conflict' 'astute' 'instruct'
-scores=('dot' 'cos_sim') # 'dot' 'cos_sim'
-positions=('start' 'end') # 'start' 'end'
+scores=('cos_sim') # 'dot' 'cos_sim'
+positions=('end') # 'start' 'end'
 
 
 index=1  # Initialize counter

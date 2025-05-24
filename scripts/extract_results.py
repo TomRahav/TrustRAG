@@ -4,8 +4,8 @@ import csv
 
 # Define the log lines you want to extract
 desired_patterns = {
-    "total_topk_num": r"total_topk_num: (\d+)",
-    "total_adv_num": r"total_adv_num: (\d+)",
+    # "total_topk_num": r"total_topk_num: (\d+)",
+    # "total_adv_num": r"total_adv_num: (\d+)",
     "success_injection_rate": r"Success injection rate in top 5 contents: (\d+\.\d+%)",
     "inference_time": r"Total run time for inference, removal and defense: (\d+\.\d+)",
     "correct_answer_pct": r"Correct Answer Percentage: (\d+\.\d+%)",
@@ -45,12 +45,12 @@ for root, dirs, files in os.walk(f"/home/tom.rahav/TrustRAG/{dir}"):
                         "model": r"model_(?:true_|false_)?([^-\s]+)",
                         "attack": r"attack_([^-\s]+)",
                         "removal": r"removal_([^-\s]+)",
-                        "defense": r"defend_([^-\s]+)",
+                        # "defense": r"defend_([^-\s]+)",
                         "adv_a_position": r"adv_a_position_([^-\s]+)",
                         "score": r"-(dot|cos)",
                         "adv_per_query": r"adv_per_query(\d+)",
-                        "M": r"-M(\d+)",
-                        "repeat": r"Repeat(\d+)",
+                        # "M": r"-M(\d+)",
+                        # "repeat": r"Repeat(\d+)",
                         # "no_questions": r"no_questions",
                         # "both_sides": r"both_sides",
                     }
@@ -72,10 +72,10 @@ for root, dirs, files in os.walk(f"/home/tom.rahav/TrustRAG/{dir}"):
                         "removal",
                         # "no_questions",
                         # "both_sides",
-                        "defense",
+                        # "defense",
                         "adv_per_query",
-                        "M",
-                        "repeat",
+                        # "M",
+                        # "repeat",
                     ]:
                         data[key] = None
                     data["no_questions"] = 0
@@ -95,10 +95,10 @@ headers = [
     "attack",
     "adv_a_position",
     "removal",
-    "defense",
+    # "defense",
     "adv_per_query",
-    "M",
-    "repeat",
+    # "M",
+    # "repeat",
     # "no_questions",
     # "both_sides",
 ] + list(desired_patterns.keys())

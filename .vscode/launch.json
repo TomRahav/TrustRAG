@@ -9,6 +9,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
+            "python": "/home/tom.rahav/miniconda3/envs/trustrag/bin/python",
             "console": "integratedTerminal",
             "args": [
                 "--log_name=test-llama",
@@ -35,6 +36,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
+            "python": "/home/tom.rahav/miniconda3/envs/trustrag/bin/python",
             "console": "integratedTerminal",
         }
     ]
