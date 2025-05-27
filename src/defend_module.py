@@ -12,7 +12,6 @@ from .utils import (
     save_outputs,
 )
 from rouge_score import rouge_scorer
-from loguru import logger
 
 
 def get_sentence_embedding(sentence, tokenizer, model):
@@ -381,10 +380,6 @@ def drift_filtering(args, tokenizer, model, get_emb, question, contents, score):
             )
         elif args.score_function == "cos_sim":
             scores = cos_similarity(question_current_embedded, all_truncated_embeddings)
-        # logger.info(
-        #     f"Similarity for sentence with {i+1} truncated from start and itself : {scores[1][0::2]}"
-        #     f"Similarity for sentence with {i+1} truncated from end and itself: {scores[1][1::2]}"
-        # )
         scores = scores.cpu().detach().numpy().round(4)
         self_scores.append(scores[1])
         self_similarity_scores_start.append(
@@ -403,11 +398,26 @@ def drift_filtering(args, tokenizer, model, get_emb, question, contents, score):
     self_scores = np.vstack(self_scores)
     self_truncated_start_scores = self_scores[:, 0::2]
     self_truncated_end_scores = self_scores[:, 1::2]
+
+    if args.eval_model_code == "contriever":
+        dot_start_thresh = 0.7
+        dot_end_thresh = 0.7
+        cos_start_thresh = 0.2
+        cos_end_thresh = 0.2
+    elif args.eval_model_code == "ance":
+        dot_start_thresh = 6
+        dot_end_thresh = 2
+        cos_start_thresh = 0.01
+        cos_end_thresh = 0.05
+    else:
+        raise ValueError(f"Unsupported eval_model_code: {args.eval_model_code}")
     self_truncated_start_mask = diff_scores_mask(
-        self_truncated_start_scores, threshold=0.2 if score == "cos_sim" else 0.7
+        self_truncated_start_scores,
+        threshold=cos_start_thresh if score == "cos_sim" else dot_start_thresh,
     )
     self_truncated_end_mask = diff_scores_mask(
-        self_truncated_end_scores, threshold=0.2 if score == "cos_sim" else 0.7
+        self_truncated_end_scores,
+        threshold=cos_end_thresh if score == "cos_sim" else dot_end_thresh,
     )
 
     # Optionally, save the self-similarity scores to a file
@@ -508,12 +518,6 @@ def drift_filtering_question_aware(
             )
         elif args.score_function == "cos_sim":
             scores = cos_similarity(question_current_embedded, all_truncated_embeddings)
-        # logger.info(
-        #     f"Similarity for sentence with {i+1} truncated from start and itself : {scores[1][0::2]}"
-        #     f"Similarity for sentence with {i+1} truncated from end and itself: {scores[1][1::2]}"
-        #     f"Similarity for sentence with {i+1} truncated from start and question: {scores[0][0::2]}"
-        #     f"Similarity for sentence with {i+1} truncated from end and question: {scores[0][1::2]}"
-        # )
         scores = scores.cpu().detach().numpy().round(4)
         self_scores.append(scores[1])
         self_similarity_scores_start.append(

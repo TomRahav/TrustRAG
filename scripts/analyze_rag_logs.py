@@ -43,7 +43,7 @@ def parse_log_file(file_path):
         if experiment_name:
             patterns = {
                 "dataset": r"dataset_([^-\s]+)",
-                "eval_model": r"retriever_([^-\s]+)",  # Corrected from retriver to retriever
+                "retriver": r"retriver_([^-\s]+)",  # Corrected from retriver to retriever
                 "model": r"model_(?:true_|false_)?([^-\s]+)",
                 "attack": r"attack_([^-\s]+)",
                 "removal": r"removal_([^-\s]+)",
@@ -65,7 +65,7 @@ def parse_log_file(file_path):
             # If experiment name is not found, set components to None
             for key in [
                 "dataset",
-                "eval_model",
+                "retriver",
                 "model",
                 "score",
                 "attack",
@@ -126,23 +126,36 @@ def clean_and_convert_data(df):
 def analyze_and_visualize(df, output_dir="plots"):
     """
     Performs analysis and generates visualizations.
-    Plots are generated per metric:
+    Plots are generated per metric and separated by retriever type:
     1. Comparison plots for 'drift' vs 'kmeans_ngram' removal methods,
-       under 'hotflip' attack, split by 'dot' and 'cos' score_functions.
+       under 'hotflip' attack, split by 'dot' and 'cos' score_functions,
+       and separated by retriever type.
        X-axis groups ordered by adv_per_query (1s, then 3s, then 5s).
     2. Plots for 'all' removal method (no context/baseline) under 'hotflip' attack,
-       split by 'dot' and 'cos' score_functions.
+       split by 'dot' and 'cos' score_functions, and separated by retriever type.
        X-axis groups ordered by adv_per_query (1s, then 3s, then 5s).
     3. Plots for 'none' attack scenarios (no adversarial attack),
-       split by 'dot' and 'cos' score_functions, showing different removal methods if present.
+       split by 'dot' and 'cos' score_functions, showing different removal methods if present,
+       and separated by retriever type.
        X-axis groups ordered by adv_per_query (1s, then 3s, then 5s).
     X-axis labels are formatted for improved readability.
     """
     print("\n--- Basic Statistics ---")
-    print(df.describe().to_string())
+    # print(df.describe().to_string())
 
     print("\n--- Missing Values ---")
     print(df.isnull().sum())
+
+    # Check if retriever column exists
+    has_retriever = "retriver" in df.columns
+    if not has_retriever:
+        print(
+            "\nWarning: 'retriever' column not found. Proceeding without retriever separation."
+        )
+        retriever_values = [None]
+    else:
+        retriever_values = sorted(df["retriver"].dropna().unique())
+        print(f"\nFound retriever types: {retriever_values}")
 
     # Define helper function for x-axis labels globally for all plotting parts
     def create_display_label(row):
@@ -159,9 +172,6 @@ def analyze_and_visualize(df, output_dir="plots"):
             label_parts.append(f"R:{row['repeat']}")
         if "adv_per_query" in row.index and pd.notna(row["adv_per_query"]):
             label_parts.append(f"APQ:{row['adv_per_query']}")
-        # For "no attack" plots, we might also want to show the removal method in the label if not using hue
-        # However, the current design uses hue if multiple removals, or implies 'all' or a single one if not.
-        # So, 'removal' is not typically part of this label string.
         return " ".join(label_parts)
 
     # Focus on 'hotflip' attack for comparison in Part 1 and Part 2
@@ -179,7 +189,7 @@ def analyze_and_visualize(df, output_dir="plots"):
 
         comparison_keys = [
             "dataset",
-            "eval_model",
+            "retriver",
             "model",
             "score",
             "adv_a_position",
@@ -189,6 +199,9 @@ def analyze_and_visualize(df, output_dir="plots"):
             "no_questions",
             "both_sides",
         ]
+        if has_retriever:
+            comparison_keys.append("retriever")
+
         df_filtered_removal_comparison = df_hotflip[
             df_hotflip["removal"].isin(["drift", "kmeans_ngram"])
         ].copy()
@@ -276,6 +289,9 @@ def analyze_and_visualize(df, output_dir="plots"):
                             "model",
                             "adv_a_position",
                         ]
+                        if has_retriever:
+                            sort_keys_comp.append("retriever")
+
                         existing_sort_keys_comp = [
                             key
                             for key in sort_keys_comp
@@ -292,58 +308,80 @@ def analyze_and_visualize(df, output_dir="plots"):
                             df_comparable_sorted = df_comparable.sort_values(
                                 by=existing_sort_keys_comp
                             )
-                            for metric in comparison_metrics:
-                                if (
-                                    metric not in df_comparable_sorted.columns
-                                    or df_comparable_sorted[metric].dropna().empty
-                                ):
-                                    print(
-                                        f"Skipping comparison plot for '{metric}': missing or all NaN."
-                                    )
-                                    continue
-                                for sf_value in score_function_values_to_iterate:
-                                    df_plot_data_comp = df_comparable_sorted[
-                                        df_comparable_sorted["score"] == sf_value
+
+                            # Iterate through retrievers
+                            for retriever_val in retriever_values:
+                                if has_retriever and retriever_val is not None:
+                                    df_retriever_subset = df_comparable_sorted[
+                                        df_comparable_sorted["retriver"]
+                                        == retriever_val
                                     ].copy()
-                                    if df_plot_data_comp.empty:
+                                    retriever_suffix = f"_retriever_{retriever_val}"
+                                    retriever_title = f" - Retriever: {retriever_val}"
+                                else:
+                                    df_retriever_subset = df_comparable_sorted.copy()
+                                    retriever_suffix = ""
+                                    retriever_title = ""
+
+                                if df_retriever_subset.empty:
+                                    continue
+
+                                for metric in comparison_metrics:
+                                    if (
+                                        metric not in df_retriever_subset.columns
+                                        or df_retriever_subset[metric].dropna().empty
+                                    ):
+                                        print(
+                                            f"Skipping comparison plot for '{metric}'{retriever_title}: missing or all NaN."
+                                        )
                                         continue
-                                    plt.figure(figsize=(15, 7))
-                                    df_plot_data_comp["plot_specific_display_group"] = (
-                                        df_plot_data_comp.apply(
+                                    for sf_value in score_function_values_to_iterate:
+                                        df_plot_data_comp = df_retriever_subset[
+                                            df_retriever_subset["score"] == sf_value
+                                        ].copy()
+                                        if df_plot_data_comp.empty:
+                                            continue
+                                        plt.figure(figsize=(15, 7))
+                                        df_plot_data_comp[
+                                            "plot_specific_display_group"
+                                        ] = df_plot_data_comp.apply(
                                             create_display_label, axis=1
                                         )
-                                    )
-                                    sns.barplot(
-                                        x="plot_specific_display_group",
-                                        y=metric,
-                                        hue="removal",
-                                        data=df_plot_data_comp,
-                                        palette={
-                                            "drift": "skyblue",
-                                            "kmeans_ngram": "salmon",
-                                        },
-                                    )
-                                    title_metric_name = metric.replace("_", " ").title()
-                                    plt.title(
-                                        f"{title_metric_name} (Hotflip Attack) Comparison\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
-                                    )
-                                    plt.xlabel(
-                                        "Experiment Group (D:Dataset M:Model P:AdvPos Mval:M R:Repeat APQ:AdvPerQuery)"
-                                    )
-                                    plt.ylabel(title_metric_name)
-                                    plt.xticks(rotation=75, ha="right", fontsize=8)
-                                    plt.legend(title="Removal Method")
-                                    plt.tight_layout()
-                                    plot_filename = os.path.join(
-                                        output_dir,
-                                        f"comparison_{metric}_score_{sf_value}.png",
-                                    )
-                                    try:
-                                        plt.savefig(plot_filename)
-                                        print(f"Saved plot to {plot_filename}")
-                                    except Exception as e:
-                                        print(f"Error saving plot {plot_filename}: {e}")
-                                    plt.close()
+                                        sns.barplot(
+                                            x="plot_specific_display_group",
+                                            y=metric,
+                                            hue="removal",
+                                            data=df_plot_data_comp,
+                                            palette={
+                                                "drift": "skyblue",
+                                                "kmeans_ngram": "salmon",
+                                            },
+                                        )
+                                        title_metric_name = metric.replace(
+                                            "_", " "
+                                        ).title()
+                                        plt.title(
+                                            f"{title_metric_name} (Hotflip Attack) Comparison{retriever_title}\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
+                                        )
+                                        plt.xlabel(
+                                            "Experiment Group (D:Dataset M:Model P:AdvPos Mval:M R:Repeat APQ:AdvPerQuery)"
+                                        )
+                                        plt.ylabel(title_metric_name)
+                                        plt.xticks(rotation=75, ha="right", fontsize=8)
+                                        plt.legend(title="Removal Method")
+                                        plt.tight_layout()
+                                        plot_filename = os.path.join(
+                                            output_dir,
+                                            f"comparison_{metric}_score_{sf_value}{retriever_suffix}.png",
+                                        )
+                                        try:
+                                            plt.savefig(plot_filename)
+                                            print(f"Saved plot to {plot_filename}")
+                                        except Exception as e:
+                                            print(
+                                                f"Error saving plot {plot_filename}: {e}"
+                                            )
+                                        plt.close()
 
         # --- Part 2: Analysis of 'all' removal method (no context/baseline) under 'hotflip' attack ---
         print("\n--- Analyzing 'all' removal method (Hotflip Attack) ---")
@@ -385,6 +423,9 @@ def analyze_and_visualize(df, output_dir="plots"):
                     "model",
                     "adv_a_position",
                 ]
+                if has_retriever:
+                    sort_keys_all_hotflip.append("retriever")
+
                 existing_sort_keys_all_hotflip = [
                     key
                     for key in sort_keys_all_hotflip
@@ -401,51 +442,71 @@ def analyze_and_visualize(df, output_dir="plots"):
                     df_all_removal_hotflip_sorted = df_all_removal_hotflip.sort_values(
                         by=existing_sort_keys_all_hotflip
                     )
-                    for metric in metrics_for_all_plots:
-                        if (
-                            metric not in df_all_removal_hotflip_sorted.columns
-                            or df_all_removal_hotflip_sorted[metric].dropna().empty
-                        ):
-                            print(
-                                f"Skipping 'all' removal (hotflip) plot for '{metric}': missing or all NaN."
-                            )
-                            continue
-                        for sf_value in score_function_values_to_iterate:
-                            df_plot_data_all_hf = df_all_removal_hotflip_sorted[
-                                df_all_removal_hotflip_sorted["score"] == sf_value
+
+                    # Iterate through retrievers
+                    for retriever_val in retriever_values:
+                        if has_retriever and retriever_val is not None:
+                            df_retriever_subset = df_all_removal_hotflip_sorted[
+                                df_all_removal_hotflip_sorted["retriver"]
+                                == retriever_val
                             ].copy()
-                            if df_plot_data_all_hf.empty:
+                            retriever_suffix = f"_retriever_{retriever_val}"
+                            retriever_title = f" - Retriever: {retriever_val}"
+                        else:
+                            df_retriever_subset = df_all_removal_hotflip_sorted.copy()
+                            retriever_suffix = ""
+                            retriever_title = ""
+
+                        if df_retriever_subset.empty:
+                            continue
+
+                        for metric in metrics_for_all_plots:
+                            if (
+                                metric not in df_retriever_subset.columns
+                                or df_retriever_subset[metric].dropna().empty
+                            ):
+                                print(
+                                    f"Skipping 'all' removal (hotflip) plot for '{metric}'{retriever_title}: missing or all NaN."
+                                )
                                 continue
-                            plt.figure(figsize=(15, 7))
-                            df_plot_data_all_hf["plot_specific_display_group"] = (
-                                df_plot_data_all_hf.apply(create_display_label, axis=1)
-                            )
-                            sns.barplot(
-                                x="plot_specific_display_group",
-                                y=metric,
-                                data=df_plot_data_all_hf,
-                                color="gray",
-                            )
-                            title_metric_name = metric.replace("_", " ").title()
-                            plt.title(
-                                f"{title_metric_name} (Hotflip Attack) - Removal: All\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
-                            )
-                            plt.xlabel(
-                                "Experiment Group (D:Dataset M:Model P:AdvPos Mval:M R:Repeat APQ:AdvPerQuery)"
-                            )
-                            plt.ylabel(title_metric_name)
-                            plt.xticks(rotation=75, ha="right", fontsize=8)
-                            plt.tight_layout()
-                            plot_filename = os.path.join(
-                                output_dir,
-                                f"hotflip_all_removal_{metric}_score_{sf_value}.png",
-                            )
-                            try:
-                                plt.savefig(plot_filename)
-                                print(f"Saved plot to {plot_filename}")
-                            except Exception as e:
-                                print(f"Error saving plot {plot_filename}: {e}")
-                            plt.close()
+                            for sf_value in score_function_values_to_iterate:
+                                df_plot_data_all_hf = df_retriever_subset[
+                                    df_retriever_subset["score"] == sf_value
+                                ].copy()
+                                if df_plot_data_all_hf.empty:
+                                    continue
+                                plt.figure(figsize=(15, 7))
+                                df_plot_data_all_hf["plot_specific_display_group"] = (
+                                    df_plot_data_all_hf.apply(
+                                        create_display_label, axis=1
+                                    )
+                                )
+                                sns.barplot(
+                                    x="plot_specific_display_group",
+                                    y=metric,
+                                    data=df_plot_data_all_hf,
+                                    color="gray",
+                                )
+                                title_metric_name = metric.replace("_", " ").title()
+                                plt.title(
+                                    f"{title_metric_name} (Hotflip Attack) - Removal: All{retriever_title}\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
+                                )
+                                plt.xlabel(
+                                    "Experiment Group (D:Dataset M:Model P:AdvPos Mval:M R:Repeat APQ:AdvPerQuery)"
+                                )
+                                plt.ylabel(title_metric_name)
+                                plt.xticks(rotation=75, ha="right", fontsize=8)
+                                plt.tight_layout()
+                                plot_filename = os.path.join(
+                                    output_dir,
+                                    f"hotflip_all_removal_{metric}_score_{sf_value}{retriever_suffix}.png",
+                                )
+                                try:
+                                    plt.savefig(plot_filename)
+                                    print(f"Saved plot to {plot_filename}")
+                                except Exception as e:
+                                    print(f"Error saving plot {plot_filename}: {e}")
+                                plt.close()
 
     # --- Part 3: Analysis of 'none' attack scenarios ---
     print("\n--- Analyzing 'none' attack scenarios (No Attack Baseline) ---")
@@ -485,6 +546,9 @@ def analyze_and_visualize(df, output_dir="plots"):
                 "adv_a_position",
                 "removal",
             ]
+            if has_retriever:
+                sort_keys_no_attack.append("retriever")
+
             existing_sort_keys_no_attack = [
                 key for key in sort_keys_no_attack if key in df_no_attack.columns
             ]
@@ -501,87 +565,108 @@ def analyze_and_visualize(df, output_dir="plots"):
                     by=existing_sort_keys_no_attack
                 )
 
-                for metric in metrics_for_no_attack_plots:
-                    if (
-                        metric not in df_no_attack_sorted.columns
-                        or df_no_attack_sorted[metric].dropna().empty
-                    ):
-                        print(
-                            f"Skipping 'none' attack plot for '{metric}': missing or all NaN."
-                        )
-                        continue
-                    for sf_value in score_function_values_to_iterate:
-                        df_plot_data_no_attack = df_no_attack_sorted[
-                            df_no_attack_sorted["score"] == sf_value
+                # Iterate through retrievers
+                for retriever_val in retriever_values:
+                    if has_retriever and retriever_val is not None:
+                        df_retriever_subset = df_no_attack_sorted[
+                            df_no_attack_sorted["retriver"] == retriever_val
                         ].copy()
-                        if df_plot_data_no_attack.empty:
+                        retriever_suffix = f"_retriever_{retriever_val}"
+                        retriever_title = f" - Retriever: {retriever_val}"
+                    else:
+                        df_retriever_subset = df_no_attack_sorted.copy()
+                        retriever_suffix = ""
+                        retriever_title = ""
+
+                    if df_retriever_subset.empty:
+                        continue
+
+                    for metric in metrics_for_no_attack_plots:
+                        if (
+                            metric not in df_retriever_subset.columns
+                            or df_retriever_subset[metric].dropna().empty
+                        ):
+                            print(
+                                f"Skipping 'none' attack plot for '{metric}'{retriever_title}: missing or all NaN."
+                            )
                             continue
+                        for sf_value in score_function_values_to_iterate:
+                            df_plot_data_no_attack = df_retriever_subset[
+                                df_retriever_subset["score"] == sf_value
+                            ].copy()
+                            if df_plot_data_no_attack.empty:
+                                continue
 
-                        plt.figure(figsize=(15, 7))
-                        df_plot_data_no_attack["plot_specific_display_group"] = (
-                            df_plot_data_no_attack.apply(create_display_label, axis=1)
-                        )
-
-                        num_removal_methods = df_plot_data_no_attack[
-                            "removal"
-                        ].nunique()
-                        title_metric_name = metric.replace("_", " ").title()
-
-                        if num_removal_methods > 1:
-                            # Dynamically create a palette if multiple removal methods are present
-                            unique_removals = df_plot_data_no_attack["removal"].unique()
-                            # Simple palette generation, can be made more sophisticated
-                            palette_no_attack = sns.color_palette(
-                                "viridis", n_colors=len(unique_removals)
-                            )
-                            removal_palette_map = dict(
-                                zip(unique_removals, palette_no_attack)
+                            plt.figure(figsize=(15, 7))
+                            df_plot_data_no_attack["plot_specific_display_group"] = (
+                                df_plot_data_no_attack.apply(
+                                    create_display_label, axis=1
+                                )
                             )
 
-                            sns.barplot(
-                                x="plot_specific_display_group",
-                                y=metric,
-                                hue="removal",
-                                data=df_plot_data_no_attack,
-                                palette=removal_palette_map,
-                            )
-                            plt.legend(title="Removal Method")
-                            plt.title(
-                                f"{title_metric_name} (No Attack)\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
-                            )
-                        else:
-                            # If only one removal method (or all are the same, e.g., 'all'), use a single color
-                            # Get the single removal method name for the title if needed
-                            single_removal_method_name = (
-                                df_plot_data_no_attack["removal"].iloc[0]
-                                if not df_plot_data_no_attack.empty
-                                else "Unknown"
-                            )
-                            sns.barplot(
-                                x="plot_specific_display_group",
-                                y=metric,
-                                data=df_plot_data_no_attack,
-                                color="mediumseagreen",
-                            )  # Different color for no attack
-                            plt.title(
-                                f"{title_metric_name} (No Attack) - Removal: {single_removal_method_name}\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
-                            )
+                            num_removal_methods = df_plot_data_no_attack[
+                                "removal"
+                            ].nunique()
+                            title_metric_name = metric.replace("_", " ").title()
 
-                        plt.xlabel(
-                            "Experiment Group (D:Dataset M:Model P:AdvPos Mval:M R:Repeat APQ:AdvPerQuery)"
-                        )
-                        plt.ylabel(title_metric_name)
-                        plt.xticks(rotation=75, ha="right", fontsize=8)
-                        plt.tight_layout()
-                        plot_filename = os.path.join(
-                            output_dir, f"no_attack_{metric}_score_{sf_value}.png"
-                        )
-                        try:
-                            plt.savefig(plot_filename)
-                            print(f"Saved plot to {plot_filename}")
-                        except Exception as e:
-                            print(f"Error saving plot {plot_filename}: {e}")
-                        plt.close()
+                            if num_removal_methods > 1:
+                                # Dynamically create a palette if multiple removal methods are present
+                                unique_removals = df_plot_data_no_attack[
+                                    "removal"
+                                ].unique()
+                                # Simple palette generation, can be made more sophisticated
+                                palette_no_attack = sns.color_palette(
+                                    "viridis", n_colors=len(unique_removals)
+                                )
+                                removal_palette_map = dict(
+                                    zip(unique_removals, palette_no_attack)
+                                )
+
+                                sns.barplot(
+                                    x="plot_specific_display_group",
+                                    y=metric,
+                                    hue="removal",
+                                    data=df_plot_data_no_attack,
+                                    palette=removal_palette_map,
+                                )
+                                plt.legend(title="Removal Method")
+                                plt.title(
+                                    f"{title_metric_name} (No Attack){retriever_title}\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
+                                )
+                            else:
+                                # If only one removal method (or all are the same, e.g., 'all'), use a single color
+                                # Get the single removal method name for the title if needed
+                                single_removal_method_name = (
+                                    df_plot_data_no_attack["removal"].iloc[0]
+                                    if not df_plot_data_no_attack.empty
+                                    else "Unknown"
+                                )
+                                sns.barplot(
+                                    x="plot_specific_display_group",
+                                    y=metric,
+                                    data=df_plot_data_no_attack,
+                                    color="mediumseagreen",
+                                )  # Different color for no attack
+                                plt.title(
+                                    f"{title_metric_name} (No Attack) - Removal: {single_removal_method_name}{retriever_title}\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
+                                )
+
+                            plt.xlabel(
+                                "Experiment Group (D:Dataset M:Model P:AdvPos Mval:M R:Repeat APQ:AdvPerQuery)"
+                            )
+                            plt.ylabel(title_metric_name)
+                            plt.xticks(rotation=75, ha="right", fontsize=8)
+                            plt.tight_layout()
+                            plot_filename = os.path.join(
+                                output_dir,
+                                f"no_attack_{metric}_score_{sf_value}{retriever_suffix}.png",
+                            )
+                            try:
+                                plt.savefig(plot_filename)
+                                print(f"Saved plot to {plot_filename}")
+                            except Exception as e:
+                                print(f"Error saving plot {plot_filename}: {e}")
+                            plt.close()
 
     print("\n--- Finished Generating All Visualizations ---")
 
