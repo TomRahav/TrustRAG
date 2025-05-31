@@ -22,7 +22,7 @@
                 "--model_name=meta-llama/Llama-3.1-8B-Instruct",
                 // "--model_name=mistralai/Mistral-Nemo-Instruct-2407",
                 // "--eval_model_code=contriever",
-                "--eval_model_code=contriever-ms",
+                "--eval_model_code=minilm",
                 "--M=10",
                 "--repeat_times=1",
                 "--adv_per_query=3",

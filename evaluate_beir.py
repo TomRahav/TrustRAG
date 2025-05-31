@@ -18,7 +18,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description="test")
 
-parser.add_argument("--model_code", type=str, default="contriever")
+parser.add_argument("--model_code", type=str, default="roberta")
 parser.add_argument(
     "--score_function", type=str, default="dot", choices=["dot", "cos_sim"]
 )
@@ -120,7 +120,9 @@ elif "dpr" in args.model_code:
             batch_size=args.per_gpu_batch_size,
         )
     )
-elif "ance" in args.model_code:
+elif any(
+    substring in args.model_code for substring in ["ance", "minilm", "mpnet", "roberta"]
+):
     model = DRES(
         models.SentenceBERT(model_code_to_cmodel_name[args.model_code]),
         batch_size=args.per_gpu_batch_size,

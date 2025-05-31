@@ -52,6 +52,7 @@ def parse_log_file(file_path):
                 "adv_per_query": r"adv_per_query(\d+)",
                 "M": r"-M(\d+)",  # Added M back based on folder name
                 "repeat": r"Repeat(\d+)",  # Added Repeat back based on folder name
+                "top_k": r"-Top_(\d+)",  # Added M back based on folder name
                 "no_questions": r"no_questions",
                 "both_sides": r"both_sides",
             }
@@ -74,6 +75,7 @@ def parse_log_file(file_path):
                 "adv_per_query",
                 "M",
                 "repeat",
+                "top_k",
                 "no_questions",
                 "both_sides",
             ]:
@@ -125,20 +127,11 @@ def clean_and_convert_data(df):
 
 def analyze_and_visualize(df, output_dir="plots"):
     """
-    Performs analysis and generates visualizations.
-    Plots are generated per metric and separated by retriever type:
-    1. Comparison plots for 'drift' vs 'kmeans_ngram' removal methods,
-       under 'hotflip' attack, split by 'dot' and 'cos' score_functions,
-       and separated by retriever type.
-       X-axis groups ordered by adv_per_query (1s, then 3s, then 5s).
-    2. Plots for 'all' removal method (no context/baseline) under 'hotflip' attack,
-       split by 'dot' and 'cos' score_functions, and separated by retriever type.
-       X-axis groups ordered by adv_per_query (1s, then 3s, then 5s).
-    3. Plots for 'none' attack scenarios (no adversarial attack),
-       split by 'dot' and 'cos' score_functions, showing different removal methods if present,
-       and separated by retriever type.
-       X-axis groups ordered by adv_per_query (1s, then 3s, then 5s).
-    X-axis labels are formatted for improved readability.
+    Complete analysis function with all original visualizations PLUS F1 score calculations.
+    F1 Score is calculated from:
+    - Precision = successful_removal_rate
+    - Recall = 1 - false_removal_rate
+    - F1 = 2 * (Precision * Recall) / (Precision + Recall)
     """
     print("\n--- Basic Statistics ---")
     # print(df.describe().to_string())
@@ -157,6 +150,46 @@ def analyze_and_visualize(df, output_dir="plots"):
         retriever_values = sorted(df["retriver"].dropna().unique())
         print(f"\nFound retriever types: {retriever_values}")
 
+    # === F1 SCORE CALCULATION ===
+    def calculate_f1_score(row):
+        """Calculate F1 score from successful_removal_rate and false_removal_rate"""
+        if pd.isna(row.get("success_removal_rate")) or pd.isna(
+            row.get("false_removal_rate")
+        ):
+            return np.nan
+        apq = row["adv_per_query"]
+        m = row.get("M")
+        repeat = row.get("repeat")
+        top_k = row.get("top_k")
+
+        num_origin = m * repeat * top_k
+        num_adv = m * repeat * apq
+
+        recall = (
+            row["success_removal_rate"] / 100
+        )  # 1 - FP / (TP + FP) = TP / (TP + FN)
+        specificity = (
+            row["false_removal_rate"] / 100
+        )  # 1 - TN / (TN + FP) = FP / (TN + FP)
+        tp = recall * num_adv
+        fp = specificity * num_origin
+        precision = tp / (tp + fp)  # TP / (TP + FP)
+
+        if precision == 0 or recall == 0:
+            return 0
+
+        f1 = 2 * (precision * recall) / (precision + recall)
+        return f1
+
+    # Add F1 score column to dataframe
+    df = df.copy()
+    df["f1_score"] = df.apply(calculate_f1_score, axis=1)
+
+    print("\n=== F1 SCORE STATISTICS ===")
+    print(f"Mean F1 Score: {df['f1_score'].mean():.4f}")
+    print(f"Median F1 Score: {df['f1_score'].median():.4f}")
+    print(f"F1 Score Range: {df['f1_score'].min():.4f} - {df['f1_score'].max():.4f}")
+
     # Define helper function for x-axis labels globally for all plotting parts
     def create_display_label(row):
         label_parts = []
@@ -166,10 +199,6 @@ def analyze_and_visualize(df, output_dir="plots"):
             label_parts.append(f"M:{row['model']}")
         if "adv_a_position" in row.index and pd.notna(row["adv_a_position"]):
             label_parts.append(f"P:{row['adv_a_position']}")
-        # if "M" in row.index and pd.notna(row["M"]):
-        #     label_parts.append(f"Mval:{row['M']}")
-        # if "repeat" in row.index and pd.notna(row["repeat"]):
-        #     label_parts.append(f"R:{row['repeat']}")
         if "adv_per_query" in row.index and pd.notna(row["adv_per_query"]):
             label_parts.append(f"APQ:{row['adv_per_query']}")
         return " ".join(label_parts)
@@ -248,12 +277,14 @@ def analyze_and_visualize(df, output_dir="plots"):
                     print(
                         "\n--- Comparison Summary: Drift vs. Kmeans_Ngram (Hotflip Attack) ---"
                     )
+                    # === UPDATED TO INCLUDE F1 SCORE ===
                     comparison_metrics = [
                         "success_injection_rate",
                         "correct_answer_pct",
                         "false_removal_rate",
                         "success_removal_rate",
                         "inference_time",
+                        "f1_score",  # ADDED F1 SCORE
                     ]
                     final_comparison_keys_comp = [
                         key for key in comparison_keys if key in df_comparable.columns
@@ -347,15 +378,25 @@ def analyze_and_visualize(df, output_dir="plots"):
                                         ] = df_plot_data_comp.apply(
                                             create_display_label, axis=1
                                         )
+
+                                        # === SPECIAL STYLING FOR F1 SCORE ===
+                                        if metric == "f1_score":
+                                            palette = {
+                                                "drift": "darkblue",
+                                                "kmeans_ngram": "darkred",
+                                            }
+                                        else:
+                                            palette = {
+                                                "drift": "skyblue",
+                                                "kmeans_ngram": "salmon",
+                                            }
+
                                         sns.barplot(
                                             x="plot_specific_display_group",
                                             y=metric,
                                             hue="removal",
                                             data=df_plot_data_comp,
-                                            palette={
-                                                "drift": "skyblue",
-                                                "kmeans_ngram": "salmon",
-                                            },
+                                            palette=palette,
                                         )
                                         title_metric_name = metric.replace(
                                             "_", " "
@@ -363,15 +404,20 @@ def analyze_and_visualize(df, output_dir="plots"):
                                         plt.title(
                                             f"{title_metric_name} (Hotflip Attack) Comparison{retriever_title}\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
                                         )
-                                        # plt.xlabel(
-                                        #     "Experiment Group (D:Dataset M:Model P:AdvPos Mval:M R:Repeat APQ:AdvPerQuery)"
-                                        # )
                                         plt.xlabel(
                                             "Experiment Group (D:Dataset M:Model P:AdvPos APQ:AdvPerQuery)"
                                         )
                                         plt.ylabel(title_metric_name)
                                         plt.xticks(rotation=75, ha="right", fontsize=8)
                                         plt.legend(title="Removal Method")
+
+                                        # === ADD VALUE ANNOTATIONS FOR F1 SCORE ===
+                                        if metric == "f1_score":
+                                            for container in plt.gca().containers:
+                                                plt.gca().bar_label(
+                                                    container, fmt="%.3f", fontsize=8
+                                                )
+
                                         plt.tight_layout()
                                         plot_filename = os.path.join(
                                             output_dir,
@@ -403,10 +449,12 @@ def analyze_and_visualize(df, output_dir="plots"):
                     "Error: 'score' or 'adv_per_query' missing in df_all_removal_hotflip. Skipping 'all' removal plots for hotflip attack."
                 )
             else:
+                # === UPDATED TO INCLUDE F1 SCORE ===
                 metrics_for_all_plots = [
                     "success_injection_rate",
                     "correct_answer_pct",
                     "inference_time",
+                    "f1_score",  # ADDED F1 SCORE
                 ]
                 metrics_for_all_plots = [
                     m
@@ -484,24 +532,33 @@ def analyze_and_visualize(df, output_dir="plots"):
                                         create_display_label, axis=1
                                     )
                                 )
+
+                                # === SPECIAL COLOR FOR F1 SCORE ===
+                                color = "darkgray" if metric == "f1_score" else "gray"
+
                                 sns.barplot(
                                     x="plot_specific_display_group",
                                     y=metric,
                                     data=df_plot_data_all_hf,
-                                    color="gray",
+                                    color=color,
                                 )
                                 title_metric_name = metric.replace("_", " ").title()
                                 plt.title(
                                     f"{title_metric_name} (Hotflip Attack) - Removal: All{retriever_title}\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
                                 )
-                                # plt.xlabel(
-                                #     "Experiment Group (D:Dataset M:Model P:AdvPos Mval:M R:Repeat APQ:AdvPerQuery)"
-                                # )
                                 plt.xlabel(
                                     "Experiment Group (D:Dataset M:Model P:AdvPos APQ:AdvPerQuery)"
                                 )
                                 plt.ylabel(title_metric_name)
                                 plt.xticks(rotation=75, ha="right", fontsize=8)
+
+                                # === ADD VALUE ANNOTATIONS FOR F1 SCORE ===
+                                if metric == "f1_score":
+                                    for container in plt.gca().containers:
+                                        plt.gca().bar_label(
+                                            container, fmt="%.3f", fontsize=8
+                                        )
+
                                 plt.tight_layout()
                                 plot_filename = os.path.join(
                                     output_dir,
@@ -530,11 +587,13 @@ def analyze_and_visualize(df, output_dir="plots"):
                 "Error: 'score' or 'adv_per_query' missing in df_no_attack. Skipping 'none' attack plots."
             )
         else:
+            # === UPDATED TO INCLUDE F1 SCORE ===
             metrics_for_no_attack_plots = [
                 "correct_answer_pct",
-                "false_removal_rate",  # Interesting if removal methods are active
+                "false_removal_rate",
                 "inference_time",
-                "success_injection_rate",  # Should be 0 or NaN, but can include for completeness
+                "success_injection_rate",
+                "f1_score",  # ADDED F1 SCORE
             ]
             metrics_for_no_attack_plots = [
                 m for m in metrics_for_no_attack_plots if m in df_no_attack.columns
@@ -620,10 +679,16 @@ def analyze_and_visualize(df, output_dir="plots"):
                                 unique_removals = df_plot_data_no_attack[
                                     "removal"
                                 ].unique()
-                                # Simple palette generation, can be made more sophisticated
-                                palette_no_attack = sns.color_palette(
-                                    "viridis", n_colors=len(unique_removals)
-                                )
+
+                                # === SPECIAL PALETTE FOR F1 SCORE ===
+                                if metric == "f1_score":
+                                    palette_no_attack = sns.color_palette(
+                                        "plasma", n_colors=len(unique_removals)
+                                    )
+                                else:
+                                    palette_no_attack = sns.color_palette(
+                                        "viridis", n_colors=len(unique_removals)
+                                    )
                                 removal_palette_map = dict(
                                     zip(unique_removals, palette_no_attack)
                                 )
@@ -640,31 +705,43 @@ def analyze_and_visualize(df, output_dir="plots"):
                                     f"{title_metric_name} (No Attack){retriever_title}\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
                                 )
                             else:
-                                # If only one removal method (or all are the same, e.g., 'all'), use a single color
-                                # Get the single removal method name for the title if needed
+                                # If only one removal method
                                 single_removal_method_name = (
                                     df_plot_data_no_attack["removal"].iloc[0]
                                     if not df_plot_data_no_attack.empty
                                     else "Unknown"
                                 )
+
+                                # === SPECIAL COLOR FOR F1 SCORE ===
+                                color = (
+                                    "darkseagreen"
+                                    if metric == "f1_score"
+                                    else "mediumseagreen"
+                                )
+
                                 sns.barplot(
                                     x="plot_specific_display_group",
                                     y=metric,
                                     data=df_plot_data_no_attack,
-                                    color="mediumseagreen",
-                                )  # Different color for no attack
+                                    color=color,
+                                )
                                 plt.title(
                                     f"{title_metric_name} (No Attack) - Removal: {single_removal_method_name}{retriever_title}\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
                                 )
 
-                            # plt.xlabel(
-                            #     "Experiment Group (D:Dataset M:Model P:AdvPos Mval:M R:Repeat APQ:AdvPerQuery)"
-                            # )
                             plt.xlabel(
                                 "Experiment Group (D:Dataset M:Model P:AdvPos APQ:AdvPerQuery)"
                             )
                             plt.ylabel(title_metric_name)
                             plt.xticks(rotation=75, ha="right", fontsize=8)
+
+                            # === ADD VALUE ANNOTATIONS FOR F1 SCORE ===
+                            if metric == "f1_score":
+                                for container in plt.gca().containers:
+                                    plt.gca().bar_label(
+                                        container, fmt="%.3f", fontsize=8
+                                    )
+
                             plt.tight_layout()
                             plot_filename = os.path.join(
                                 output_dir,
@@ -677,7 +754,54 @@ def analyze_and_visualize(df, output_dir="plots"):
                                 print(f"Error saving plot {plot_filename}: {e}")
                             plt.close()
 
-    print("\n--- Finished Generating All Visualizations ---")
+    # === ADDITIONAL F1 SCORE ANALYSIS ===
+    print("\n=== F1 SCORE DEEP DIVE ANALYSIS ===")
+
+    if "f1_score" in df.columns and not df["f1_score"].dropna().empty:
+        # Group by key experimental factors
+        groupby_cols = ["attack", "removal", "score"]
+        if has_retriever:
+            groupby_cols.append("retriver")
+
+        f1_summary = (
+            df.groupby(groupby_cols)["f1_score"]
+            .agg(["count", "mean", "std", "min", "max"])
+            .round(4)
+        )
+
+        print("\nF1 Score Summary by Attack, Removal Method, and Score Function:")
+        print(f1_summary.to_string())
+
+        # Create a heatmap of F1 scores
+        plt.figure(figsize=(12, 8))
+
+        # Pivot for heatmap
+        pivot_data = df.pivot_table(
+            values="f1_score",
+            index=["attack", "removal"],
+            columns="score",
+            aggfunc="mean",
+        )
+
+        sns.heatmap(
+            pivot_data,
+            annot=True,
+            fmt=".3f",
+            cmap="RdYlBu_r",
+            cbar_kws={"label": "F1 Score"},
+        )
+        plt.title("F1 Score Heatmap by Attack Type, Removal Method, and Score Function")
+        plt.tight_layout()
+
+        heatmap_filename = os.path.join(output_dir, "f1_score_heatmap.png")
+        try:
+            plt.savefig(heatmap_filename)
+            print(f"Saved F1 heatmap to {heatmap_filename}")
+        except Exception as e:
+            print(f"Error saving F1 heatmap {heatmap_filename}: {e}")
+        plt.close()
+
+    print("\n--- Finished Generating All Visualizations with F1 Score ---")
 
 
 def main():

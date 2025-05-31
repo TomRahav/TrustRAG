@@ -13,8 +13,8 @@ source .env
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate /home/tom.rahav/miniconda3/envs/trustrag
 
-MODEL=ance
-SCORE=dot
+MODEL=roberta
+SCORE=cos_sim
 DATASET=msmarco
 # Execute your Python script
 python evaluate_beir.py --model_code $MODEL \

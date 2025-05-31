@@ -437,8 +437,8 @@ def drift_filtering(args, tokenizer, model, get_emb, question, contents, score):
     #     "self_similarity_scores_truncated_end",
     # )
     topk_contents = contents
-    topk_contents = [t for t, m in zip(topk_contents, self_truncated_start_mask) if m]
-    topk_contents = [t for t, m in zip(topk_contents, self_truncated_end_mask) if m]
+    combined_mask = self_truncated_start_mask & self_truncated_end_mask
+    topk_contents = [t for t, m in zip(topk_contents, combined_mask) if m]
     return topk_contents
 
 

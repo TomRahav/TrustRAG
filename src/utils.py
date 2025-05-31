@@ -21,12 +21,18 @@ model_code_to_qmodel_name = {
     "contriever": "facebook/contriever",
     "contriever-ms": "facebook/contriever-msmarco",
     "ance": "sentence-transformers/msmarco-roberta-base-ance-firstp",
+    "minilm": "sentence-transformers/all-MiniLM-L6-v2",
+    "mpnet": "sentence-transformers/all-mpnet-base-v2",
+    "roberta": "sentence-transformers/all-distilroberta-v1",
 }
 
 model_code_to_cmodel_name = {
     "contriever": "facebook/contriever",
     "contriever-ms": "facebook/contriever-msmarco",
     "ance": "sentence-transformers/msmarco-roberta-base-ance-firstp",
+    "minilm": "sentence-transformers/all-MiniLM-L6-v2",
+    "mpnet": "sentence-transformers/all-mpnet-base-v2",
+    "roberta": "sentence-transformers/all-distilroberta-v1",
 }
 
 
@@ -110,7 +116,9 @@ def load_models(model_code):
         c_model = model
         tokenizer = AutoTokenizer.from_pretrained(model_code_to_qmodel_name[model_code])
         get_emb = contriever_get_emb
-    elif "ance" in model_code:
+    elif any(
+        substring in model_code for substring in ["ance", "minilm", "mpnet", "roberta"]
+    ):
         model = SentenceTransformer(model_code_to_qmodel_name[model_code])
         assert (
             model_code_to_cmodel_name[model_code]

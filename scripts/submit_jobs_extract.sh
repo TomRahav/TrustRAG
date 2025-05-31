@@ -2,8 +2,8 @@
 
 # Define arrays of parameters 
 datasets=('msmarco') # 'nq' 'hotpotqa' 'msmarco'
-eval_models_names=("contriever-ms") # "contriever" "contriever-ms" "ance"
-scores=('dot' 'cos_sim') # 'dot' 'cos_sim'
+eval_models_names=("contriever-ms") # "contriever" "contriever-ms" "ance" "minilm" "mpnet" "roberta"
+scores=('cos_sim') # 'dot' 'cos_sim'
 topks=(20) # 5 10 20
 
 index=1  # Initialize counter
