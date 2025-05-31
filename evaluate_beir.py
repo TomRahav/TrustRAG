@@ -24,14 +24,13 @@ parser.add_argument(
 )
 parser.add_argument("--top_k", type=int, default=100)
 parser.add_argument(
-    "--dataset", type=str, default="nq", help="BEIR dataset to evaluate"
+    "--dataset", type=str, default="mirage", help="BEIR dataset to evaluate"
 )
 parser.add_argument("--split", type=str, default="test")
 
 parser.add_argument(
     "--result_output", default="results/beir_results/debug.json", type=str
 )
-
 parser.add_argument("--gpu_id", type=int, default=0)
 parser.add_argument(
     "--per_gpu_batch_size",
@@ -39,7 +38,6 @@ parser.add_argument(
     type=int,
     help="Batch size per GPU/CPU for indexing.",
 )
-parser.add_argument("--max_length", type=int, default=128)
 
 args = parser.parse_args()
 
@@ -126,7 +124,7 @@ elif any(
     model = DRES(
         models.SentenceBERT(model_code_to_cmodel_name[args.model_code]),
         batch_size=args.per_gpu_batch_size,
-        corpus_chunk_size=10000,
+        corpus_chunk_size=3000,
     )
 else:
     raise NotImplementedError

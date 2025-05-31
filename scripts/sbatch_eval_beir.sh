@@ -15,7 +15,7 @@ conda activate /home/tom.rahav/miniconda3/envs/trustrag
 
 MODEL=roberta
 SCORE=cos_sim
-DATASET=msmarco
+DATASET=mirage
 # Execute your Python script
 python evaluate_beir.py --model_code $MODEL \
                         --score_function $SCORE \

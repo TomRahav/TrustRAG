@@ -135,7 +135,7 @@ def load_models(model_code):
 
 
 def load_beir_datasets(dataset_name, split):
-    assert dataset_name in ["nq", "msmarco", "hotpotqa"]
+    assert dataset_name in ["nq", "msmarco", "hotpotqa", "mirage"]
     if dataset_name == "msmarco":
         split = "train"
     url = "https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/{}.zip".format(
