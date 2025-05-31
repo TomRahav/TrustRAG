@@ -1,15 +1,15 @@
 #!/bin/bash
 
 # Define arrays of parameters 
-datasets=('nq' 'hotpotqa') # 'nq' 'hotpotqa' 'msmarco' 'mirage'
-models_names=("meta-llama/Llama-3.1-8B-Instruct") # "mistralai/Mistral-Nemo-Instruct-2407" "meta-llama/Llama-3.1-8B-Instruct" "gpt-4o"
-eval_models_names=("minilm" "roberta") # "contriever" "contriever-ms" "ance" "minilm" "mpnet" "roberta"
-attacks=("hotflip") # "none" "LM_targeted" "hotflip" "pia"
-removals=('drift' 'kmeans_ngram') # 'none' 'drift' 'kmeans' 'kmeans_ngram' 'all'
+datasets=('mirage') # 'nq' 'hotpotqa' 'msmarco' 'mirage'
+models_names=("meta-llama/Llama-3.1-8B-Instruct" "meta-llama/Llama-3.1-8B-Instruct" "gpt-4o") # "mistralai/Mistral-Nemo-Instruct-2407" "meta-llama/Llama-3.1-8B-Instruct" "gpt-4o"
+eval_models_names=("contriever") # "contriever" "contriever-ms" "ance" "minilm" "mpnet" "roberta"
+attacks=("none") # "none" "LM_targeted" "hotflip" "pia"
+removals=('all') # 'none' 'drift' 'kmeans' 'kmeans_ngram' 'all'
 defenses=('none') # 'none' 'conflict' 'astute' 'instruct'
-scores=('cos_sim') # 'dot' 'cos_sim'
-positions=('start' 'end') # 'start' 'end'
-advs_per_query=(1 3 5)
+scores=('dot') # 'dot' 'cos_sim'
+positions=('start') # 'start' 'end'
+advs_per_query=(3)
 
 
 index=1  # Initialize counter
