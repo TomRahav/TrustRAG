@@ -404,6 +404,11 @@ def drift_filtering(args, tokenizer, model, get_emb, question, contents, score):
         dot_end_thresh = 0.7
         cos_start_thresh = 0.2
         cos_end_thresh = 0.2
+    elif args.eval_model_code == "contriever-ms":
+        dot_start_thresh = 0.95
+        dot_end_thresh = 0.5
+        cos_start_thresh = 0.45
+        cos_end_thresh = 0.25
     elif args.eval_model_code == "ance":
         dot_start_thresh = 6
         dot_end_thresh = 2
@@ -457,9 +462,9 @@ def drift_filtering_question_aware(
     question_embed = question_top_k_adv_embedded[0].unsqueeze(0)
     self_similarity_scores_start = []
     self_similarity_scores_end = []
-    question_similarity_scores_start = []
-    question_similarity_scores_end = []
-    questions_scores = []
+    # question_similarity_scores_start = []
+    # question_similarity_scores_end = []
+    # questions_scores = []
     self_scores = []
     for i in range(0, len(top_k_adv_tokenized["input_ids"])):
         # truncating the sentence

@@ -61,7 +61,7 @@ def extract_experiment_info(folder_name):
         if "Seed_" in part:
             try:
                 info["seed"] = int(part.split("_")[1])
-            except:
+            except:  # noqa: E722
                 pass
 
     return info
@@ -451,15 +451,15 @@ def main():
     save_detailed_analysis(all_results, output_dir)
 
     # Print final summary
-    print(f"\n🎉 Analysis complete!")
+    print("\n🎉 Analysis complete!")
     print(f"📁 Results saved to '{output_dir}' directory:")
-    print(f"   - experiment_comparison_summary.csv: Summary statistics")
-    print(f"   - detailed_analysis.json: Detailed common questions analysis")
-    print(f"   - adversarial_comparison_overview.png: Overview visualizations")
-    print(f"   - overlap_heatmap.png: Heatmap visualization")
+    print("   - experiment_comparison_summary.csv: Summary statistics")
+    print("   - detailed_analysis.json: Detailed common questions analysis")
+    print("   - adversarial_comparison_overview.png: Overview visualizations")
+    print("   - overlap_heatmap.png: Heatmap visualization")
 
     # Print key insights
-    print(f"\n🔑 Key Insights:")
+    print("\n🔑 Key Insights:")
     avg_overlap = summary_df["common_percentage"].mean()
     print(f"   - Average overlap percentage: {avg_overlap:.1f}%")
 

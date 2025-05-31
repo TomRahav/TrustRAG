@@ -106,7 +106,7 @@ class Attacker:
             target_queries, desc="Processing HotFlip queries"
         ):
             query = query_score["query"]
-            top1_score = query_score["top1_score"]
+            # top1_score = query_score["top1_score"]
             id = query_score["id"]
             adv_texts_b = self.all_adv_texts[id]["adv_texts"]
 

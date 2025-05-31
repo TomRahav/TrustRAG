@@ -19,13 +19,13 @@ import time
 
 model_code_to_qmodel_name = {
     "contriever": "facebook/contriever",
-    "contriever-msmarco": "facebook/contriever-msmarco",
+    "contriever-ms": "facebook/contriever-msmarco",
     "ance": "sentence-transformers/msmarco-roberta-base-ance-firstp",
 }
 
 model_code_to_cmodel_name = {
     "contriever": "facebook/contriever",
-    "contriever-msmarco": "facebook/contriever-msmarco",
+    "contriever-ms": "facebook/contriever-msmarco",
     "ance": "sentence-transformers/msmarco-roberta-base-ance-firstp",
 }
 

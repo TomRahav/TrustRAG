@@ -43,7 +43,7 @@ def parse_log_file(file_path):
         if experiment_name:
             patterns = {
                 "dataset": r"dataset_([^-\s]+)",
-                "retriver": r"retriver_([^-\s]+)",  # Corrected from retriver to retriever
+                "retriver": r"retriver_((?:(?!-model)[^_])+)",  # Fixed: allows hyphens within retriever name
                 "model": r"model_(?:true_|false_)?([^-\s]+)",
                 "attack": r"attack_([^-\s]+)",
                 "removal": r"removal_([^-\s]+)",
@@ -65,7 +65,7 @@ def parse_log_file(file_path):
             # If experiment name is not found, set components to None
             for key in [
                 "dataset",
-                "retriver",
+                "retriver",  # Fixed: corrected spelling
                 "model",
                 "score",
                 "attack",
@@ -166,10 +166,10 @@ def analyze_and_visualize(df, output_dir="plots"):
             label_parts.append(f"M:{row['model']}")
         if "adv_a_position" in row.index and pd.notna(row["adv_a_position"]):
             label_parts.append(f"P:{row['adv_a_position']}")
-        if "M" in row.index and pd.notna(row["M"]):
-            label_parts.append(f"Mval:{row['M']}")
-        if "repeat" in row.index and pd.notna(row["repeat"]):
-            label_parts.append(f"R:{row['repeat']}")
+        # if "M" in row.index and pd.notna(row["M"]):
+        #     label_parts.append(f"Mval:{row['M']}")
+        # if "repeat" in row.index and pd.notna(row["repeat"]):
+        #     label_parts.append(f"R:{row['repeat']}")
         if "adv_per_query" in row.index and pd.notna(row["adv_per_query"]):
             label_parts.append(f"APQ:{row['adv_per_query']}")
         return " ".join(label_parts)
@@ -363,8 +363,11 @@ def analyze_and_visualize(df, output_dir="plots"):
                                         plt.title(
                                             f"{title_metric_name} (Hotflip Attack) Comparison{retriever_title}\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
                                         )
+                                        # plt.xlabel(
+                                        #     "Experiment Group (D:Dataset M:Model P:AdvPos Mval:M R:Repeat APQ:AdvPerQuery)"
+                                        # )
                                         plt.xlabel(
-                                            "Experiment Group (D:Dataset M:Model P:AdvPos Mval:M R:Repeat APQ:AdvPerQuery)"
+                                            "Experiment Group (D:Dataset M:Model P:AdvPos APQ:AdvPerQuery)"
                                         )
                                         plt.ylabel(title_metric_name)
                                         plt.xticks(rotation=75, ha="right", fontsize=8)
@@ -491,8 +494,11 @@ def analyze_and_visualize(df, output_dir="plots"):
                                 plt.title(
                                     f"{title_metric_name} (Hotflip Attack) - Removal: All{retriever_title}\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
                                 )
+                                # plt.xlabel(
+                                #     "Experiment Group (D:Dataset M:Model P:AdvPos Mval:M R:Repeat APQ:AdvPerQuery)"
+                                # )
                                 plt.xlabel(
-                                    "Experiment Group (D:Dataset M:Model P:AdvPos Mval:M R:Repeat APQ:AdvPerQuery)"
+                                    "Experiment Group (D:Dataset M:Model P:AdvPos APQ:AdvPerQuery)"
                                 )
                                 plt.ylabel(title_metric_name)
                                 plt.xticks(rotation=75, ha="right", fontsize=8)
@@ -651,8 +657,11 @@ def analyze_and_visualize(df, output_dir="plots"):
                                     f"{title_metric_name} (No Attack) - Removal: {single_removal_method_name}{retriever_title}\nScore Func: {sf_value} (AdvPerQuery sorted: 1s, 3s, 5s)"
                                 )
 
+                            # plt.xlabel(
+                            #     "Experiment Group (D:Dataset M:Model P:AdvPos Mval:M R:Repeat APQ:AdvPerQuery)"
+                            # )
                             plt.xlabel(
-                                "Experiment Group (D:Dataset M:Model P:AdvPos Mval:M R:Repeat APQ:AdvPerQuery)"
+                                "Experiment Group (D:Dataset M:Model P:AdvPos APQ:AdvPerQuery)"
                             )
                             plt.ylabel(title_metric_name)
                             plt.xticks(rotation=75, ha="right", fontsize=8)

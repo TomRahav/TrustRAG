@@ -4,7 +4,7 @@
 #SBATCH --error=logs/job_%j.txt      # Standard error
 #SBATCH --ntasks=1                     # Number of tasks
 #SBATCH -c 8                      # number of cores (treats)
-#SBATCH --gres=gpu:L4:1
+#SBATCH --gres=gpu:L40:1
 #SBATCH --mail-user=tom.rahav@campus.technion.ac.il
 #SBATCH --mail-type=NONE                # Send email on all events
 
@@ -33,7 +33,7 @@ repeat_times=10
 M=10                            # number of queries
 split="test"
 top_k=5
-adv_per_query=1              # poison rate = adv_per_query / top_k
+adv_per_query=5              # poison rate = adv_per_query / top_k
 llm_flag=true
 llm_arg=""
 if $llm_flag; then

@@ -117,13 +117,14 @@ elif "dpr" in args.model_code:
                 "facebook-dpr-ctx_encoder-multiset-base",
                 " [SEP] ",
             ),
-            batch_size=128,
+            batch_size=args.per_gpu_batch_size,
         )
     )
 elif "ance" in args.model_code:
     model = DRES(
         models.SentenceBERT(model_code_to_cmodel_name[args.model_code]),
         batch_size=args.per_gpu_batch_size,
+        corpus_chunk_size=10000,
     )
 else:
     raise NotImplementedError

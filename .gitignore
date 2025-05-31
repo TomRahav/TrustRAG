@@ -178,5 +178,6 @@ datasets/
 data_cache/
 logs/
 old_logs/
-results/beir_results/msmarco-contriever-cos.json
+results/beir_results/msmarco-*
+
 analysis_output/

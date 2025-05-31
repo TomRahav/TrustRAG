@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Define arrays of parameters 
-datasets=('nq' 'hotpotqa' 'msmarco') # 'nq' 'hotpotqa' 'msmarco'
-eval_models_names=("ance") # "contriever" "contriever-ms" "ance"
+datasets=('msmarco') # 'nq' 'hotpotqa' 'msmarco'
+eval_models_names=("contriever-ms") # "contriever" "contriever-ms" "ance"
 scores=('dot' 'cos_sim') # 'dot' 'cos_sim'
-topks=(5 20) # 5 10 20
+topks=(20) # 5 10 20
 
 index=1  # Initialize counter
 

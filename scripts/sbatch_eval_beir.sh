@@ -14,14 +14,14 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate /home/tom.rahav/miniconda3/envs/trustrag
 
 MODEL=ance
-SCORE=cos_sim
+SCORE=dot
 DATASET=msmarco
 # Execute your Python script
 python evaluate_beir.py --model_code $MODEL \
                         --score_function $SCORE \
                         --top_k 20 \
                         --dataset $DATASET \
-                        --per_gpu_batch_size 1024 \
+                        --per_gpu_batch_size 16 \
                         --result_output "results/beir_results/$DATASET-$MODEL-$SCORE.json"
 
 
