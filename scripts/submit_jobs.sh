@@ -3,12 +3,12 @@
 # Define arrays of parameters 
 datasets=('mirage') # 'nq' 'hotpotqa' 'msmarco' 'mirage'
 models_names=("mistralai/Mistral-Nemo-Instruct-2407" "meta-llama/Llama-3.1-8B-Instruct" "gpt-4o") # "mistralai/Mistral-Nemo-Instruct-2407" "meta-llama/Llama-3.1-8B-Instruct" "gpt-4o"
-eval_models_names=( "contriever") # "contriever" "contriever-ms" "ance" "minilm" "mpnet" "roberta"
+eval_models_names=("minilm" "mpnet" "roberta") # "contriever" "contriever-ms" "ance" "minilm" "mpnet" "roberta"
 attacks=("none") # "none" "LM_targeted" "hotflip" "pia"
-removals=('all') # 'none' 'drift' 'kmeans' 'kmeans_ngram' 'all'
+removals=('none') # 'none' 'drift' 'kmeans' 'kmeans_ngram' 'all'
 defenses=('none') # 'none' 'conflict' 'astute' 'instruct'
-scores=('dot') # 'dot' 'cos_sim'
-positions=('start') # 'start' 'end'
+scores=('cos_sim') # 'dot' 'cos_sim'
+positions=('start' 'end') # 'start' 'end'
 advs_per_query=(3)
 
 

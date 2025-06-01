@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Define arrays of parameters 
-datasets=('hotpotqa') # 'nq' 'hotpotqa' 'msmarco' 'mirage'
-eval_models_names=("mpnet") # "contriever" "contriever-ms" "ance" "minilm" "mpnet" "roberta"
+datasets=('msmarco') # 'nq' 'hotpotqa' 'msmarco' 'mirage'
+eval_models_names=("minilm" "mpnet" "roberta") # "contriever" "contriever-ms" "ance" "minilm" "mpnet" "roberta"
 scores=('cos_sim') # 'dot' 'cos_sim'
 topks=(20) # 5 10 20
 

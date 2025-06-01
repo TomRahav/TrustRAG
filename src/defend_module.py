@@ -424,23 +424,29 @@ def drift_filtering(args, tokenizer, model, get_emb, question, contents, score):
             dot_start_thresh = 3.15
             dot_end_thresh = 0.258
     elif args.eval_model_code == "minilm":
-        if args.eval_dataset == "nq":
+        if args.eval_dataset == "mirage":
+            cos_start_thresh = 0.375
+            cos_end_thresh = 0.06
+        elif args.eval_dataset == "nq":
             cos_start_thresh = 0.5
             cos_end_thresh = 0.24
         elif args.eval_dataset == "hotpotqa":
             cos_start_thresh = 0.656
             cos_end_thresh = 0.31
     elif args.eval_model_code == "roberta":
-        if args.eval_dataset == "nq":
+        if args.eval_dataset == "mirage":
+            cos_start_thresh = 0.428
+            cos_end_thresh = 0.046
+        elif args.eval_dataset == "nq":
             cos_start_thresh = 0.49
             cos_end_thresh = 0.25
         elif args.eval_dataset == "hotpotqa":
             cos_start_thresh = 0.68
             cos_end_thresh = 0.421
     elif args.eval_model_code == "mpnet":
-        raise NotImplementedError(
-            "MPNet model is not implemented for drift filtering. Please use a different model."
-        )
+        if args.eval_dataset == "mirage":
+            cos_start_thresh = 0.648
+            cos_end_thresh = 0.186
     else:
         raise ValueError(f"Unsupported eval_model_code: {args.eval_model_code}")
     self_truncated_start_mask = diff_scores_mask(
