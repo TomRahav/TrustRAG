@@ -754,14 +754,19 @@ def analyze_and_visualize(df, output_dir="plots"):
                                 print(f"Error saving plot {plot_filename}: {e}")
                             plt.close()
 
-    # === ADDITIONAL F1 SCORE ANALYSIS ===
+    # === ENHANCED F1 SCORE ANALYSIS WITH DATASET DIFFERENTIATION ===
     print("\n=== F1 SCORE DEEP DIVE ANALYSIS ===")
 
     if "f1_score" in df.columns and not df["f1_score"].dropna().empty:
-        # Group by key experimental factors
+        # Check if dataset column exists
+        has_dataset = "dataset" in df.columns
+
+        # Group by key experimental factors including dataset
         groupby_cols = ["attack", "removal", "score"]
         if has_retriever:
             groupby_cols.append("retriver")
+        if has_dataset:
+            groupby_cols.insert(0, "dataset")  # Add dataset as first grouping column
 
         f1_summary = (
             df.groupby(groupby_cols)["f1_score"]
@@ -769,37 +774,165 @@ def analyze_and_visualize(df, output_dir="plots"):
             .round(4)
         )
 
-        print("\nF1 Score Summary by Attack, Removal Method, and Score Function:")
+        if has_dataset:
+            print(
+                "\nF1 Score Summary by Dataset, Attack, Removal Method, and Score Function:"
+            )
+        else:
+            print("\nF1 Score Summary by Attack, Removal Method, and Score Function:")
         print(f1_summary.to_string())
 
-        # Create a heatmap of F1 scores
-        plt.figure(figsize=(12, 8))
+        # Dataset-specific analysis if dataset column exists
+        if has_dataset:
+            print("\n=== DATASET-SPECIFIC F1 SCORE ANALYSIS ===")
 
-        # Pivot for heatmap
-        pivot_data = df.pivot_table(
-            values="f1_score",
-            index=["attack", "removal"],
-            columns="score",
-            aggfunc="mean",
-        )
+            # Overall performance by dataset
+            dataset_summary = (
+                df.groupby("dataset")["f1_score"]
+                .agg(["count", "mean", "std", "min", "max"])
+                .round(4)
+            )
+            print("\nOverall F1 Score Performance by Dataset:")
+            print(dataset_summary.to_string())
 
-        sns.heatmap(
-            pivot_data,
-            annot=True,
-            fmt=".3f",
-            cmap="RdYlBu_r",
-            cbar_kws={"label": "F1 Score"},
-        )
-        plt.title("F1 Score Heatmap by Attack Type, Removal Method, and Score Function")
-        plt.tight_layout()
+            # Best performing configurations per dataset
+            print("\nBest F1 Score Configuration per Dataset:")
+            best_configs = df.loc[df.groupby("dataset")["f1_score"].idxmax()]
+            display_cols = ["dataset", "attack", "removal", "score", "f1_score"]
+            if has_retriever:
+                display_cols.insert(-1, "retriver")
+            print(best_configs[display_cols].to_string(index=False))
 
-        heatmap_filename = os.path.join(output_dir, "f1_score_heatmap.png")
-        try:
-            plt.savefig(heatmap_filename)
-            print(f"Saved F1 heatmap to {heatmap_filename}")
-        except Exception as e:
-            print(f"Error saving F1 heatmap {heatmap_filename}: {e}")
-        plt.close()
+            # Cross-dataset comparison for each attack type
+            print("\nF1 Score Comparison Across Datasets by Attack Type:")
+            attack_dataset_comparison = df.pivot_table(
+                values="f1_score", index="attack", columns="dataset", aggfunc="mean"
+            ).round(4)
+            print(attack_dataset_comparison.to_string())
+
+        # Create visualizations
+        if has_dataset:
+            # Get unique score types
+            score_types = df["score"].unique()
+            print(f"Found score types: {score_types}")
+            print(f"Data shape: {df.shape}")
+            print(f"F1 score column info: {df['f1_score'].describe()}")
+
+            # Create separate heatmaps for each score type
+            for score_type in score_types:
+                print(f"\nProcessing {score_type} score type...")
+                score_data = df[df["score"] == score_type]
+                print(f"Score data shape: {score_data.shape}")
+                print(f"Score data F1 scores: {score_data['f1_score'].describe()}")
+                print(
+                    f"Unique datasets: {score_data['dataset'].unique() if 'dataset' in score_data.columns else 'No dataset column'}"
+                )
+                print(
+                    f"Unique attacks: {score_data['attack'].unique() if 'attack' in score_data.columns else 'No attack column'}"
+                )
+                print(
+                    f"Unique removals: {score_data['removal'].unique() if 'removal' in score_data.columns else 'No removal column'}"
+                )
+
+                # Skip if no data for this score type
+                if score_data.empty or score_data["f1_score"].dropna().empty:
+                    print(
+                        f"No F1 score data available for {score_type} score type, skipping heatmaps"
+                    )
+                    continue
+
+                # Check required columns exist
+                required_cols = ["dataset", "attack", "removal", "f1_score"]
+                missing_cols = [
+                    col for col in required_cols if col not in score_data.columns
+                ]
+                if missing_cols:
+                    print(
+                        f"Missing required columns for {score_type}: {missing_cols}, skipping"
+                    )
+                    continue
+
+                print(
+                    f"Successfully validated data for {score_type} - would create visualizations here"
+                )
+                # Heatmaps temporarily disabled for debugging
+
+            # Create separate box plots for each score type
+            for score_type in score_types:
+                score_data = df[df["score"] == score_type]
+
+                # Skip if no data for this score type
+                if score_data.empty or score_data["f1_score"].dropna().empty:
+                    print(
+                        f"No F1 score data available for {score_type} score type, skipping boxplots"
+                    )
+                    continue
+
+                print(
+                    f"Would create boxplots for {score_type} score type ({len(score_data)} data points)"
+                )
+                # Boxplots temporarily disabled for debugging
+
+            # Statistical significance testing between datasets
+            print("\n=== STATISTICAL SIGNIFICANCE TESTING ===")
+            from scipy import stats
+
+            datasets = df["dataset"].unique()
+            if len(datasets) >= 2:
+                print("Pairwise t-tests between datasets (p-values):")
+                for i, dataset1 in enumerate(datasets):
+                    for dataset2 in datasets[i + 1 :]:
+                        data1 = df[df["dataset"] == dataset1]["f1_score"].dropna()
+                        data2 = df[df["dataset"] == dataset2]["f1_score"].dropna()
+
+                        if len(data1) > 1 and len(data2) > 1:
+                            _, p_value = stats.ttest_ind(data1, data2)
+                            significance = (
+                                "***"
+                                if p_value < 0.001
+                                else (
+                                    "**"
+                                    if p_value < 0.01
+                                    else "*" if p_value < 0.05 else ""
+                                )
+                            )
+                            print(
+                                f"{dataset1} vs {dataset2}: p = {p_value:.4f} {significance}"
+                            )
+
+        else:
+            # Original single heatmap if no dataset column
+            plt.figure(figsize=(12, 8))
+
+            pivot_data = df.pivot_table(
+                values="f1_score",
+                index=["attack", "removal"],
+                columns="score",
+                aggfunc="mean",
+            )
+
+            sns.heatmap(
+                pivot_data,
+                annot=True,
+                fmt=".3f",
+                cmap="RdYlBu_r",
+                cbar_kws={"label": "F1 Score"},
+            )
+            plt.title(
+                "F1 Score Heatmap by Attack Type, Removal Method, and Score Function"
+            )
+            plt.tight_layout()
+
+            heatmap_filename = os.path.join(output_dir, "f1_score_heatmap.png")
+            try:
+                plt.savefig(heatmap_filename)
+                print(f"Saved F1 heatmap to {heatmap_filename}")
+            except Exception as e:
+                print(f"Error saving F1 heatmap {heatmap_filename}: {e}")
+            plt.close()
+
+    else:
+        print("No F1 score data available for analysis.")
 
     print("\n--- Finished Generating All Visualizations with F1 Score ---")
 
