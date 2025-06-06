@@ -400,29 +400,41 @@ def drift_filtering(args, tokenizer, model, get_emb, question, contents, score):
     self_truncated_end_scores = self_scores[:, 1::2]
 
     if args.eval_model_code == "contriever":
-        dot_start_thresh = 0.7
-        dot_end_thresh = 0.7
-        cos_start_thresh = 0.2
-        cos_end_thresh = 0.2
         if args.eval_dataset == "mirage":
             dot_start_thresh = 0.5
             dot_end_thresh = 0.55
+        elif args.eval_dataset == "nq":
+            cos_start_thresh = 0.448
+            cos_end_thresh = 0.450
+        elif args.eval_dataset == "hotpotqa":
+            cos_start_thresh = 0.464
+            cos_end_thresh = 0.358
+        elif args.eval_dataset == "msmarco":
+            cos_start_thresh = 0.3
+            cos_end_thresh = 0.2
     elif args.eval_model_code == "contriever-ms":
-        dot_start_thresh = 0.95
-        dot_end_thresh = 0.5
-        cos_start_thresh = 0.45
-        cos_end_thresh = 0.25
         if args.eval_dataset == "mirage":
             dot_start_thresh = 0.64
             dot_end_thresh = 0.12
+        elif args.eval_dataset == "nq":
+            cos_start_thresh = 0.468
+            cos_end_thresh = 0.302
+        elif args.eval_dataset == "hotpotqa":
+            cos_start_thresh = 0.52
+            cos_end_thresh = 0.299
+        # elif args.eval_dataset == "msmarco":
+        #     cos_start_thresh = 0.0
+        #     cos_end_thresh = 0.0
     elif args.eval_model_code == "ance":
-        dot_start_thresh = 6
-        dot_end_thresh = 2
-        cos_start_thresh = 0.01
-        cos_end_thresh = 0.05
         if args.eval_dataset == "mirage":
             dot_start_thresh = 3.15
             dot_end_thresh = 0.258
+        elif args.eval_dataset == "nq":
+            cos_start_thresh = 0.009
+            cos_end_thresh = 0.0008
+        elif args.eval_dataset == "hotpotqa":
+            cos_start_thresh = 0.0131
+            cos_end_thresh = 0.0041
     elif args.eval_model_code == "minilm":
         if args.eval_dataset == "mirage":
             cos_start_thresh = 0.375
