@@ -430,9 +430,13 @@ def drift_filtering(args, tokenizer, model, get_emb, question, contents, score):
             dot_start_thresh = 3.15
             dot_end_thresh = 0.258
         elif args.eval_dataset == "nq":
+            dot_start_thresh = 8.8
+            dot_end_thresh = 3.7
             cos_start_thresh = 0.009
             cos_end_thresh = 0.0008
         elif args.eval_dataset == "hotpotqa":
+            dot_start_thresh = 10.6
+            dot_end_thresh = 3.36
             cos_start_thresh = 0.0131
             cos_end_thresh = 0.0041
     elif args.eval_model_code == "minilm":
