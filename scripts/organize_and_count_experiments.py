@@ -32,19 +32,43 @@ class TrustRAGExperimentAnalyzer:
         # Remove .log extension
         name = experiment_name.replace(".log", "")
 
-        # Split by dashes and extract components
-        parts = name.split("-")
-
         experiment_config = {}
 
+        # Handle dataset extraction
+        if name.startswith("dataset_"):
+            # Find the dataset part
+            dataset_match = re.search(r"dataset_([^-]+)", name)
+            if dataset_match:
+                experiment_config["dataset"] = dataset_match.group(1)
+
+        # Handle retriever extraction (including contriever-ms)
+        retriever_match = re.search(r"retriver_([^-]+(?:-[^-]+)*?)(?:-model_|$)", name)
+        if retriever_match:
+            experiment_config["retriever"] = retriever_match.group(1)
+
+        # Handle model extraction (including meta-llama and mistralai)
+        # Look for specific model patterns in your naming convention
+        if "gpt-4o" in name:
+            experiment_config["model"] = "gpt-4o"
+        elif "Llama-3.1" in name:
+            experiment_config["model"] = "Llama-3.1"
+        elif "Mistral-Nemo" in name:
+            experiment_config["model"] = "Mistral-Nemo"
+        else:
+            # Fallback to regex approach
+            model_match = re.search(
+                r"model_(true_)?([^-]+(?:-[^-]+)*?)(?:-M10x|-attack_|$)", name
+            )
+            if model_match:
+                prefix = model_match.group(1) or ""  # 'true_' or empty
+                model_name = model_match.group(2)
+                experiment_config["model"] = prefix + model_name
+
+        # Split by dashes and extract other components
+        parts = name.split("-")
+
         for part in parts:
-            if part.startswith("dataset_"):
-                experiment_config["dataset"] = part.replace("dataset_", "")
-            elif part.startswith("retriver_"):
-                experiment_config["retriever"] = part.replace("retriver_", "")
-            elif part.startswith("model_"):
-                experiment_config["model"] = part.replace("model_", "")
-            elif part.startswith("attack_"):
+            if part.startswith("attack_"):
                 experiment_config["attack"] = part.replace("attack_", "")
             elif part.startswith("removal_"):
                 experiment_config["removal"] = part.replace("removal_", "")
@@ -67,7 +91,100 @@ class TrustRAGExperimentAnalyzer:
 
         return experiment_config
 
+    def check_duplicates_in_folder(self, folder_path, log_files):
+        """Check for duplicate experiments within a single folder"""
+        file_configs = []
+        duplicates_found = False
+
+        for log_file in log_files:
+            config = self.parse_experiment_name(log_file.name)
+            # Create a signature for this experiment (excluding filename-specific parts)
+            signature = tuple(
+                sorted(
+                    [
+                        (k, v)
+                        for k, v in config.items()
+                        if k not in ["folder"]  # Exclude metadata we add
+                    ]
+                )
+            )
+            file_configs.append((log_file.name, signature, config))
+
+        # Group by signature to find duplicates
+        signature_groups = defaultdict(list)
+        for filename, signature, config in file_configs:
+            signature_groups[signature].append(filename)
+
+        # Report duplicates
+        for signature, filenames in signature_groups.items():
+            if len(filenames) > 1:
+                duplicates_found = True
+                print(
+                    f"⚠️  WARNING: Duplicate experiments found in folder {folder_path.name}:"
+                )
+                print(
+                    f"   Configuration: {dict(signature) if signature else 'Unable to parse'}"
+                )
+                print(f"   Files: {', '.join(filenames)}")
+                print()
+
+        return duplicates_found, len(signature_groups)
+
     def analyze_experiments(self):
+        """Analyze only .log files inside folders and check for duplicates"""
+        folders = self.parse_folder_structure()
+
+        print(f"Found {len(folders)} experiment folders")
+        print("Ignoring job_*.txt files - analyzing only .log files inside folders")
+        print("Checking for duplicate experiments within each folder...\n")
+
+        # Parse individual log files within folders only
+        all_experiments = []
+        folder_summary = []
+        total_duplicates_found = False
+
+        for folder in folders:
+            folder_path = self.logs_dir / folder
+            if folder_path.exists():
+                log_files = list(folder_path.glob("*.log"))
+
+                # Check for duplicates in this folder
+                duplicates_found, unique_configs = self.check_duplicates_in_folder(
+                    folder_path, log_files
+                )
+                if duplicates_found:
+                    total_duplicates_found = True
+
+                folder_summary.append(
+                    (folder, len(log_files), unique_configs, duplicates_found)
+                )
+                print(
+                    f"Folder {folder}: {len(log_files)} .log files, {unique_configs} unique configurations"
+                    + (" ⚠️  HAS DUPLICATES" if duplicates_found else " ✅")
+                )
+
+                for log_file in log_files:
+                    config = self.parse_experiment_name(log_file.name)
+                    config["folder"] = folder  # Add folder info for tracking
+                    config["filename"] = log_file.name  # Add filename for tracking
+                    all_experiments.append(config)
+
+        print(f"\nTotal .log files found: {len(all_experiments)}")
+
+        if total_duplicates_found:
+            print("\n🔶 DUPLICATE DETECTION SUMMARY:")
+            print("   Some folders contain duplicate experiment configurations.")
+            print("   See warnings above for details. No files were modified.")
+        else:
+            print(
+                "\n✅ NO DUPLICATES FOUND: All experiments are unique within their folders."
+            )
+
+        print("-" * 60)
+
+        self.experiments = all_experiments
+        self.folder_summary = folder_summary
+        return self.count_configurations()
         """Analyze only .log files inside folders"""
         folders = self.parse_folder_structure()
 
@@ -155,11 +272,26 @@ class TrustRAGExperimentAnalyzer:
 
         # Folder breakdown
         summary.append("FOLDER BREAKDOWN:")
-        for folder, count in self.folder_summary:
-            summary.append(f"  {folder}: {count} .log files")
+        duplicates_summary = []
+        for folder, file_count, unique_count, has_duplicates in self.folder_summary:
+            status = " ⚠️  DUPLICATES" if has_duplicates else " ✅"
+            summary.append(
+                f"  {folder}: {file_count} files, {unique_count} unique configs{status}"
+            )
+            if has_duplicates:
+                duplicates_summary.append(folder)
+
         summary.append(
-            f"\nTotal .log files across all folders: {len(self.experiments)}\n"
+            f"\nTotal .log files across all folders: {len(self.experiments)}"
         )
+
+        if duplicates_summary:
+            summary.append(f"Folders with duplicates: {len(duplicates_summary)}")
+            summary.append("⚠️  Note: Some experiments may be duplicated within folders")
+        else:
+            summary.append("✅ All experiments are unique within their folders")
+
+        summary.append("")
 
         # Parameter counts
         for param, counter in self.analysis.items():
@@ -205,7 +337,7 @@ class TrustRAGExperimentAnalyzer:
 # Usage example:
 if __name__ == "__main__":
     # Initialize analyzer
-    analyzer = TrustRAGExperimentAnalyzer("/home/tom.rahav/TrustRAG/logs")
+    analyzer = TrustRAGExperimentAnalyzer("logs")
 
     # Run analysis
     counts = analyzer.analyze_experiments()
@@ -222,7 +354,7 @@ if __name__ == "__main__":
     # Expected combinations (based on your folder structure)
     datasets = ["hotpotqa", "mirage", "msmarco", "nq"]
     retrievers = ["ance", "contriever", "contriever-ms", "minilm", "roberta", "mpnet"]
-    models = ["gpt-4o", "true_meta-llama", "true_mistralai"]
+    models = ["gpt-4o", "Llama-3.1", "Mistralai-Nemo"]
 
     expected_base_combinations = len(datasets) * len(retrievers) * len(models)
     print(f"Expected base combinations: {expected_base_combinations}")
