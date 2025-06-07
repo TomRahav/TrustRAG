@@ -89,6 +89,76 @@ def parse_log_file(file_path):
     return data
 
 
+def check_log_completion(file_path):
+    """
+    Check if a log file has the required completion pattern at the end.
+    Returns True if complete, False if incomplete.
+    """
+    required_patterns = [
+        r"Correct Answer Percentage: \d+\.\d+%",
+        r"Incorrect Answer Percentage: \d+\.\d+%",
+        r"Total run time for inference, removal and defense: \d+\.\d+",
+    ]
+
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            content = f.read()
+
+        # Check if all required patterns exist in the file
+        for pattern in required_patterns:
+            if not re.search(pattern, content):
+                return False
+        return True
+    except Exception as e:
+        print(f"Error reading file {file_path}: {e}")
+        return False
+
+
+def find_incomplete_logs(logs_dir, delete_incomplete=False):
+    """
+    Find and optionally delete incomplete log files.
+    Returns lists of complete and incomplete log files.
+    """
+    complete_logs = []
+    incomplete_logs = []
+
+    for root, dirs, files in os.walk(logs_dir):
+        for file in files:
+            if file.endswith(".log"):
+                file_path = os.path.join(root, file)
+
+                if check_log_completion(file_path):
+                    complete_logs.append(file_path)
+                else:
+                    incomplete_logs.append(file_path)
+
+    print(f"\n=== LOG COMPLETION ANALYSIS ===")
+    print(f"Total log files found: {len(complete_logs) + len(incomplete_logs)}")
+    print(f"Complete logs: {len(complete_logs)}")
+    print(f"Incomplete logs: {len(incomplete_logs)}")
+
+    if incomplete_logs:
+        print(f"\n=== INCOMPLETE LOG FILES ===")
+        for log_file in incomplete_logs:
+            print(f"  - {log_file}")
+
+        if delete_incomplete:
+            print(f"\n=== DELETING INCOMPLETE LOGS ===")
+            deleted_count = 0
+            for log_file in incomplete_logs:
+                try:
+                    os.remove(log_file)
+                    print(f"  Deleted: {log_file}")
+                    deleted_count += 1
+                except Exception as e:
+                    print(f"  Error deleting {log_file}: {e}")
+            print(f"Successfully deleted {deleted_count} incomplete log files.")
+    else:
+        print("All log files are complete!")
+
+    return complete_logs, incomplete_logs
+
+
 def clean_and_convert_data(df):
     """
     Cleans the DataFrame and converts percentage strings to floats,
@@ -873,33 +943,6 @@ def analyze_and_visualize(df, output_dir="plots"):
                 )
                 # Boxplots temporarily disabled for debugging
 
-            # Statistical significance testing between datasets
-            print("\n=== STATISTICAL SIGNIFICANCE TESTING ===")
-            from scipy import stats
-
-            datasets = df["dataset"].unique()
-            if len(datasets) >= 2:
-                print("Pairwise t-tests between datasets (p-values):")
-                for i, dataset1 in enumerate(datasets):
-                    for dataset2 in datasets[i + 1 :]:
-                        data1 = df[df["dataset"] == dataset1]["f1_score"].dropna()
-                        data2 = df[df["dataset"] == dataset2]["f1_score"].dropna()
-
-                        if len(data1) > 1 and len(data2) > 1:
-                            _, p_value = stats.ttest_ind(data1, data2)
-                            significance = (
-                                "***"
-                                if p_value < 0.001
-                                else (
-                                    "**"
-                                    if p_value < 0.01
-                                    else "*" if p_value < 0.05 else ""
-                                )
-                            )
-                            print(
-                                f"{dataset1} vs {dataset2}: p = {p_value:.4f} {significance}"
-                            )
-
         else:
             # Original single heatmap if no dataset column
             plt.figure(figsize=(12, 8))
@@ -954,22 +997,31 @@ def main():
         help="Path to save the extracted CSV data.",
     )
     parser.add_argument(
-        "--plot_dir",
-        type=str,
-        default="/home/tom.rahav/TrustRAG/plots",
-        help="Directory to save generated plots.",
+        "--delete_incomplete",
+        action="store_true",
+        help="Delete incomplete log files (implies --check_incomplete).",
     )
     args = parser.parse_args()
+
+    # Check for incomplete logs if requested
+    complete_logs, incomplete_logs = find_incomplete_logs(
+        args.logs_dir, delete_incomplete=args.delete_incomplete
+    )
 
     extracted_data = []
     for root, dirs, files in os.walk(args.logs_dir):
         for file in files:
             if file.endswith(".log"):
                 file_path = os.path.join(root, file)
-                # print(f"Processing: {file_path}") # Suppress this print to reduce console clutter
-                data = parse_log_file(file_path)
-                if data:  # Only append if data was successfully extracted
-                    extracted_data.append(data)
+
+                # Only process complete log files
+                if check_log_completion(file_path):
+                    # print(f"Processing: {file_path}") # Suppress this print to reduce console clutter
+                    data = parse_log_file(file_path)
+                    if data:  # Only append if data was successfully extracted
+                        extracted_data.append(data)
+                else:
+                    print(f"Skipping incomplete log: {file_path}")
 
     if not extracted_data:
         print("No log files found or no data extracted.")
@@ -997,7 +1049,7 @@ def main():
     df = clean_and_convert_data(df)
 
     # Pass the plot directory to the analysis function
-    analyze_and_visualize(df, args.plot_dir)
+    analyze_and_visualize(df)
 
 
 if __name__ == "__main__":
