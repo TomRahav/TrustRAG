@@ -27,8 +27,16 @@ def parse_folder_name(folder_name):
 def calculate_quantiles(data, quantiles=[0.95, 0.90]):
     """
     Calculate specified quantiles (default: 95th and 90th percentiles)
+    Ignores 0.0 values in the data
     """
-    return [np.quantile(data, q) for q in quantiles]
+    # Filter out 0.0 values
+    filtered_data = [x for x in data if x != 0.0]
+
+    # Handle edge case where all values are 0.0
+    if not filtered_data:
+        return [0.0] * len(quantiles)
+
+    return [np.quantile(filtered_data, q) for q in quantiles]
 
 
 def process_json_files(root_directory):

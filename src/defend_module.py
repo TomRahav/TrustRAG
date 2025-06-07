@@ -60,7 +60,7 @@ def calculate_average_score(sent1, sent2, metric="rouge"):
 
 def diff_scores_mask(scores, threshold=0.7):
     diff_scores = np.max(scores, axis=1) - np.min(scores, axis=1)
-    return np.where(diff_scores > threshold, 0, 1)
+    return np.where(diff_scores >= threshold, 0, 1)
 
 
 def group_n_gram_filtering(topk_contents):
@@ -304,6 +304,199 @@ def similarity_filtering(topk_embeddings, topk_contents):
     return topk_contents
 
 
+# Thresholds based on 5th highest quantile (95th percentile)
+THRESHOLDS = {
+    "95TH": {
+        "ance": {
+            "hotpotqa": {
+                "cos_sim": {"start": 0.013599991798400879, "end": 0.004800021648406982},
+                "dot": {"start": 10.64370117187499, "end": 3.3918823242187495},
+            },
+            "mirage": {"dot": {"start": 3.4425048828125, "end": 0.27020263671875}},
+            "nq": {
+                "cos_sim": {"start": 0.011500000953674316, "end": 0.006900012493133545},
+                "dot": {"start": 8.9462158203125, "end": 3.806195068359375},
+            },
+        },
+        "contriever": {
+            "hotpotqa": {
+                "cos_sim": {"start": 0.5458999872207642, "end": 0.4624999761581421},
+                "dot": {"start": 0.7414000540971756, "end": 0.5564000606536865},
+            },
+            "mirage": {"dot": {"start": 0.518700122833252, "end": 0.5886001586914062}},
+            "msmarco": {
+                "cos_sim": {"start": 0.3141000270843506, "end": 0.21069997549057007},
+                "dot": {"start": 0.7460000336170196, "end": 0.5795849740505217},
+            },
+            "nq": {
+                "cos_sim": {"start": 0.5106899887323374, "end": 0.5255899608135217},
+                "dot": {"start": 0.7155000686645507, "end": 0.6925700426101682},
+            },
+        },
+        "contriever-ms": {
+            "hotpotqa": {
+                "cos_sim": {"start": 0.542199969291687, "end": 0.32897999286651497},
+                "dot": {"start": 1.3232499957084656, "end": 0.5869998931884766},
+            },
+            "mirage": {
+                "dot": {"start": 0.6604001522064209, "end": 0.12539982795715332}
+            },
+            "nq": {
+                "cos_sim": {"start": 0.5046700000762937, "end": 0.33633998036384527},
+                "dot": {"start": 1.0324800491333004, "end": 0.5676999092102051},
+            },
+        },
+        "minilm": {
+            "hotpotqa": {
+                "cos_sim": {"start": 0.6956000328063965, "end": 0.3611999750137329}
+            },
+            "mirage": {
+                "cos_sim": {"start": 0.3888000249862671, "end": 0.06610000133514404}
+            },
+            "nq": {"cos_sim": {"start": 0.5521999597549438, "end": 0.2957000136375427}},
+        },
+        "mpnet": {
+            "hotpotqa": {
+                "cos_sim": {"start": 0.7818999886512756, "end": 0.47651997804641694}
+            },
+            "mirage": {
+                "cos_sim": {"start": 0.6570000052452087, "end": 0.18900001049041748}
+            },
+            "nq": {"cos_sim": {"start": 0.535099983215332, "end": 0.2817000150680542}},
+        },
+        "roberta": {
+            "hotpotqa": {
+                "cos_sim": {"start": 0.7274999618530273, "end": 0.4700999855995178}
+            },
+            "mirage": {
+                "cos_sim": {"start": 0.44209998846054077, "end": 0.0494999885559082}
+            },
+            "nq": {"cos_sim": {"start": 0.5338100075721732, "end": 0.2977049887180324}},
+        },
+    },
+    # Thresholds based on 10th highest quantile (90th percentile)
+    "90th": {
+        "ance": {
+            "hotpotqa": {
+                "cos_sim": {
+                    "start": 0.010800004005432129,
+                    "end": 0.0026000142097473145,
+                },
+                "dot": {"start": 8.56248779296875, "end": 1.7627197265624996},
+            },
+            "mirage": {"dot": {"start": 2.29742431640625, "end": 0.17999267578125}},
+            "nq": {
+                "cos_sim": {"start": 0.008199989795684814, "end": 0.003000020980834961},
+                "dot": {"start": 6.393896484375002, "end": 1.6750122070312505},
+            },
+        },
+        "contriever": {
+            "hotpotqa": {
+                "cos_sim": {"start": 0.4448999762535095, "end": 0.33319997787475586},
+                "dot": {"start": 0.6084000885486602, "end": 0.4356999397277832},
+            },
+            "mirage": {
+                "dot": {"start": 0.42239999771118164, "end": 0.3916001319885254}
+            },
+            "msmarco": {
+                "cos_sim": {"start": 0.24620002508163452, "end": 0.15609997510910034},
+                "dot": {"start": 0.6252799272537234, "end": 0.46960012912750243},
+            },
+            "nq": {
+                "cos_sim": {"start": 0.4103999733924866, "end": 0.38029998540878296},
+                "dot": {"start": 0.5550999879837036, "end": 0.5524000406265259},
+            },
+        },
+        "contriever-ms": {
+            "hotpotqa": {
+                "cos_sim": {"start": 0.445900022983551, "end": 0.2182999849319458},
+                "dot": {"start": 1.1533000469207764, "end": 0.4084000587463379},
+            },
+            "mirage": {
+                "dot": {"start": 0.4581000804901123, "end": 0.08420014381408691}
+            },
+            "nq": {
+                "cos_sim": {"start": 0.3574400067329408, "end": 0.18809998035430908},
+                "dot": {"start": 0.7973599672317503, "end": 0.34599995613098145},
+            },
+        },
+        "minilm": {
+            "hotpotqa": {
+                "cos_sim": {"start": 0.5895000100135803, "end": 0.26410001516342163}
+            },
+            "mirage": {
+                "cos_sim": {"start": 0.25269997119903564, "end": 0.03689998388290405}
+            },
+            "nq": {
+                "cos_sim": {"start": 0.4162999987602234, "end": 0.17079997062683105}
+            },
+        },
+        "mpnet": {
+            "hotpotqa": {
+                "cos_sim": {"start": 0.6625000238418579, "end": 0.3531000018119812}
+            },
+            "mirage": {
+                "cos_sim": {"start": 0.5047000050544739, "end": 0.1039000153541565}
+            },
+            "nq": {
+                "cos_sim": {"start": 0.39670002460479736, "end": 0.15261999368667648}
+            },
+        },
+        "roberta": {
+            "hotpotqa": {
+                "cos_sim": {"start": 0.609499990940094, "end": 0.33880001306533813}
+            },
+            "mirage": {
+                "cos_sim": {"start": 0.3240000009536743, "end": 0.031599998474121094}
+            },
+            "nq": {
+                "cos_sim": {"start": 0.40220998525619495, "end": 0.1687999963760376}
+            },
+        },
+    },
+}
+
+
+def get_thresholds(model_code, dataset, score_function, percentile="95th"):
+    """
+    Get thresholds for given model, dataset, score function, and percentile.
+
+    Args:
+        model_code: Model identifier (e.g., "ance", "contriever")
+        dataset: Dataset name (e.g., "hotpotqa", "mirage")
+        score_function: Scoring function ("cos_sim" or "dot")
+        percentile: Which percentile to use ("90th" or "95th")
+
+    Returns:
+        tuple: (start_threshold, end_threshold)
+
+    Raises:
+        ValueError: If configuration not found
+    """
+    try:
+        threshold_dict = THRESHOLDS[percentile]
+        model_config = threshold_dict[model_code]
+        dataset_config = model_config[dataset]
+        score_config = dataset_config[score_function]
+        return score_config["start"], score_config["end"]
+    except KeyError as e:
+        available_configs = []
+        if model_code in threshold_dict:
+            for ds in threshold_dict[model_code]:
+                for sf in threshold_dict[model_code][ds]:
+                    available_configs.append(f"{model_code}/{ds}/{sf}")
+
+        raise ValueError(
+            f"No {percentile} percentile threshold configuration found for {model_code}/{dataset}/{score_function}. "
+            f"Available configurations: {available_configs}"
+        )
+
+
+# Usage examples:
+# start_thresh, end_thresh = get_thresholds("ance", "hotpotqa", "cos_sim", "90th")
+# start_thresh, end_thresh = get_thresholds("contriever", "nq", "dot", "95th")
+
+
 def drift_filtering(args, tokenizer, model, get_emb, question, contents, score):
 
     question_top_k_adv_tokenized = tokenizer(
@@ -399,79 +592,15 @@ def drift_filtering(args, tokenizer, model, get_emb, question, contents, score):
     self_truncated_start_scores = self_scores[:, 0::2]
     self_truncated_end_scores = self_scores[:, 1::2]
 
-    if args.eval_model_code == "contriever":
-        if args.eval_dataset == "mirage":
-            dot_start_thresh = 0.5
-            dot_end_thresh = 0.55
-        elif args.eval_dataset == "nq":
-            cos_start_thresh = 0.448
-            cos_end_thresh = 0.450
-        elif args.eval_dataset == "hotpotqa":
-            cos_start_thresh = 0.464
-            cos_end_thresh = 0.358
-        elif args.eval_dataset == "msmarco":
-            cos_start_thresh = 0.3
-            cos_end_thresh = 0.2
-    elif args.eval_model_code == "contriever-ms":
-        if args.eval_dataset == "mirage":
-            dot_start_thresh = 0.64
-            dot_end_thresh = 0.12
-        elif args.eval_dataset == "nq":
-            cos_start_thresh = 0.468
-            cos_end_thresh = 0.302
-        elif args.eval_dataset == "hotpotqa":
-            cos_start_thresh = 0.52
-            cos_end_thresh = 0.299
-        # elif args.eval_dataset == "msmarco":
-        #     cos_start_thresh = 0.0
-        #     cos_end_thresh = 0.0
-    elif args.eval_model_code == "ance":
-        if args.eval_dataset == "mirage":
-            dot_start_thresh = 3.15
-            dot_end_thresh = 0.258
-        elif args.eval_dataset == "nq":
-            dot_start_thresh = 8.8
-            dot_end_thresh = 3.7
-            cos_start_thresh = 0.009
-            cos_end_thresh = 0.0008
-        elif args.eval_dataset == "hotpotqa":
-            dot_start_thresh = 10.6
-            dot_end_thresh = 3.36
-            cos_start_thresh = 0.0131
-            cos_end_thresh = 0.0041
-    elif args.eval_model_code == "minilm":
-        if args.eval_dataset == "mirage":
-            cos_start_thresh = 0.375
-            cos_end_thresh = 0.06
-        elif args.eval_dataset == "nq":
-            cos_start_thresh = 0.5
-            cos_end_thresh = 0.24
-        elif args.eval_dataset == "hotpotqa":
-            cos_start_thresh = 0.656
-            cos_end_thresh = 0.31
-    elif args.eval_model_code == "roberta":
-        if args.eval_dataset == "mirage":
-            cos_start_thresh = 0.428
-            cos_end_thresh = 0.046
-        elif args.eval_dataset == "nq":
-            cos_start_thresh = 0.49
-            cos_end_thresh = 0.25
-        elif args.eval_dataset == "hotpotqa":
-            cos_start_thresh = 0.68
-            cos_end_thresh = 0.421
-    elif args.eval_model_code == "mpnet":
-        if args.eval_dataset == "mirage":
-            cos_start_thresh = 0.648
-            cos_end_thresh = 0.186
-    else:
-        raise ValueError(f"Unsupported eval_model_code: {args.eval_model_code}")
+    start_thresh, end_thresh = get_thresholds(
+        args.eval_model_code, args.dataset, args.score_function
+    )
     self_truncated_start_mask = diff_scores_mask(
         self_truncated_start_scores,
-        threshold=cos_start_thresh if score == "cos_sim" else dot_start_thresh,
+        threshold=start_thresh,
     )
     self_truncated_end_mask = diff_scores_mask(
-        self_truncated_end_scores,
-        threshold=cos_end_thresh if score == "cos_sim" else dot_end_thresh,
+        self_truncated_end_scores, threshold=end_thresh
     )
 
     # Optionally, save the self-similarity scores to a file
