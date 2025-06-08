@@ -265,14 +265,19 @@ class TrustRAGLogsCleaner:
 # Usage
 if __name__ == "__main__":
     # Initialize cleaner in DRY RUN mode first (safe)
-    cleaner = TrustRAGLogsCleaner("logs", dry_run=True)
+    dry_run = True
+    cleaner = TrustRAGLogsCleaner("logs", dry_run=dry_run)
 
     print("🔍 STEP 1: DRY RUN - Checking what would be deleted")
     deleted_files = cleaner.clean_all_folders()
 
-    if deleted_files:
+    if dry_run:
         print("\n" + "⚠️ " * 20)
         print("⚠️  Ready to delete files? Change dry_run=True to dry_run=False")
+        print("⚠️ " * 20)
+    else:
+        print("\n" + "⚠️ " * 20)
+        print("⚠️  You are in LIVE DELETION mode!")
         print("⚠️ " * 20)
 
         # Uncomment the lines below to actually delete files

@@ -34,18 +34,6 @@ class TrustRAGExperimentAnalyzer:
 
         experiment_config = {}
 
-        # Handle dataset extraction
-        if name.startswith("dataset_"):
-            # Find the dataset part
-            dataset_match = re.search(r"dataset_([^-]+)", name)
-            if dataset_match:
-                experiment_config["dataset"] = dataset_match.group(1)
-
-        # Handle retriever extraction (including contriever-ms)
-        retriever_match = re.search(r"retriver_([^-]+(?:-[^-]+)*?)(?:-model_|$)", name)
-        if retriever_match:
-            experiment_config["retriever"] = retriever_match.group(1)
-
         # Handle model extraction (including meta-llama and mistralai)
         # Look for specific model patterns in your naming convention
         if "gpt-4o" in name:
@@ -148,6 +136,22 @@ class TrustRAGExperimentAnalyzer:
             if folder_path.exists():
                 log_files = list(folder_path.glob("*.log"))
 
+                # Extract dataset and retriever from folder name
+                folder_dataset = None
+                folder_retriever = None
+
+                # Extract dataset from folder name
+                folder_dataset_match = re.search(r"dataset_([^-\s]+)", folder)
+                if folder_dataset_match:
+                    folder_dataset = folder_dataset_match.group(1)
+
+                # Extract retriever from folder name
+                folder_retriever_match = re.search(
+                    r"retriver_([^-]+(?:-[^-]+)*?)(?:-|$)", folder
+                )
+                if folder_retriever_match:
+                    folder_retriever = folder_retriever_match.group(1)
+
                 # Check for duplicates in this folder
                 duplicates_found, unique_configs = self.check_duplicates_in_folder(
                     folder_path, log_files
@@ -167,6 +171,11 @@ class TrustRAGExperimentAnalyzer:
                     config = self.parse_experiment_name(log_file.name)
                     config["folder"] = folder  # Add folder info for tracking
                     config["filename"] = log_file.name  # Add filename for tracking
+
+                    # Use folder-level dataset/retriever if not found in filename
+                    config["dataset"] = folder_dataset
+                    config["retriever"] = folder_retriever
+
                     all_experiments.append(config)
 
         print(f"\nTotal .log files found: {len(all_experiments)}")
@@ -181,33 +190,6 @@ class TrustRAGExperimentAnalyzer:
             )
 
         print("-" * 60)
-
-        self.experiments = all_experiments
-        self.folder_summary = folder_summary
-        return self.count_configurations()
-        """Analyze only .log files inside folders"""
-        folders = self.parse_folder_structure()
-
-        print(f"Found {len(folders)} experiment folders")
-        print("Ignoring job_*.txt files - analyzing only .log files inside folders\n")
-
-        # Parse individual log files within folders only
-        all_experiments = []
-        folder_summary = []
-
-        for folder in folders:
-            folder_path = self.logs_dir / folder
-            if folder_path.exists():
-                log_files = list(folder_path.glob("*.log"))
-                folder_summary.append((folder, len(log_files)))
-                print(f"Folder {folder}: {len(log_files)} .log files")
-
-                for log_file in log_files:
-                    config = self.parse_experiment_name(log_file.name)
-                    config["folder"] = folder  # Add folder info for tracking
-                    all_experiments.append(config)
-
-        print(f"\nTotal .log files found: {len(all_experiments)}")
 
         self.experiments = all_experiments
         self.folder_summary = folder_summary

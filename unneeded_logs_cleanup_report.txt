@@ -1,0 +1,8 @@
+TrustRAG Unneeded Logs Cleanup Report
+========================================
+
+Mode: LIVE DELETION
+Processed folders: 55
+Files deleted: 0
+
+No files were deleted.
