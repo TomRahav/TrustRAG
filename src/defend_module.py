@@ -306,7 +306,7 @@ def similarity_filtering(topk_embeddings, topk_contents):
 
 # Thresholds based on 5th highest quantile (95th percentile)
 THRESHOLDS = {
-    "95TH": {
+    95: {
         "ance": {
             "hotpotqa": {
                 "cos_sim": {"start": 0.013599991798400879, "end": 0.004800021648406982},
@@ -375,7 +375,7 @@ THRESHOLDS = {
         },
     },
     # Thresholds based on 10th highest quantile (90th percentile)
-    "90th": {
+    90: {
         "ance": {
             "hotpotqa": {
                 "cos_sim": {
@@ -457,7 +457,7 @@ THRESHOLDS = {
 }
 
 
-def get_thresholds(model_code, dataset, score_function, percentile="95th"):
+def get_thresholds(model_code, dataset, score_function, percentile=95):
     """
     Get thresholds for given model, dataset, score function, and percentile.
 
@@ -465,7 +465,7 @@ def get_thresholds(model_code, dataset, score_function, percentile="95th"):
         model_code: Model identifier (e.g., "ance", "contriever")
         dataset: Dataset name (e.g., "hotpotqa", "mirage")
         score_function: Scoring function ("cos_sim" or "dot")
-        percentile: Which percentile to use ("90th" or "95th")
+        percentile: Which percentile to use (90 or 95)
 
     Returns:
         tuple: (start_threshold, end_threshold)
@@ -473,6 +473,8 @@ def get_thresholds(model_code, dataset, score_function, percentile="95th"):
     Raises:
         ValueError: If configuration not found
     """
+    if model_code in ["ance", "minilm", "mpnet", "roberta"]:
+        percentile = 90
     try:
         threshold_dict = THRESHOLDS[percentile]
         model_config = threshold_dict[model_code]
@@ -593,7 +595,7 @@ def drift_filtering(args, tokenizer, model, get_emb, question, contents, score):
     self_truncated_end_scores = self_scores[:, 1::2]
 
     start_thresh, end_thresh = get_thresholds(
-        args.eval_model_code, args.dataset, args.score_function
+        args.eval_model_code, args.eval_dataset, args.score_function
     )
     self_truncated_start_mask = diff_scores_mask(
         self_truncated_start_scores,
