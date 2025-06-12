@@ -473,6 +473,7 @@ def get_thresholds(model_code, dataset, score_function, percentile=95):
     Raises:
         ValueError: If configuration not found
     """
+    # TODO - remove
     if model_code in ["ance", "minilm", "mpnet", "roberta"]:
         percentile = 90
     try:

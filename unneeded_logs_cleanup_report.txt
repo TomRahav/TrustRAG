@@ -1,7 +1,7 @@
 TrustRAG Unneeded Logs Cleanup Report
 ========================================
 
-Mode: LIVE DELETION
+Mode: DRY RUN
 Processed folders: 55
 Files deleted: 0
 
