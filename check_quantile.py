@@ -39,7 +39,7 @@ def calculate_quantiles(data, quantiles=[0.95, 0.90]):
     return [np.quantile(filtered_data, q) for q in quantiles]
 
 
-def process_json_files(root_directory):
+def process_json_files(root_directory, quantiles):
     """
     Process all JSON files in the directory structure and extract quantile data
     """
@@ -77,24 +77,24 @@ def process_json_files(root_directory):
                 if isinstance(data, list) and all(
                     isinstance(x, (int, float)) for x in data
                 ):
-                    # Calculate 5th and 10th highest quantiles (95th and 90th percentiles)
-                    quantiles = calculate_quantiles(data, [0.95, 0.90])
+                    quantiles_val = calculate_quantiles(data, quantiles)
 
                     # Determine file type
                     adv_pos = "end" if "diff_end_all" in filename else "start"
-
-                    results.append(
-                        {
-                            "dataset": dataset,
-                            "retrieval_model": retrieval_model,
-                            "score_function": score_function,
-                            "top_k": top_k,
-                            "adv_pos": adv_pos,
-                            "data_points": len(data),
-                            "5th_highest_quantile_95th_percentile": quantiles[0],
-                            "10th_highest_quantile_90th_percentile": quantiles[1],
-                        }
-                    )
+                    quantile_dict = {
+                        f"{int(q * 100)}th_quantile": q_val
+                        for q, q_val in zip(quantiles, quantiles_val)
+                    }
+                    results_dict = {
+                        "dataset": dataset,
+                        "retrieval_model": retrieval_model,
+                        "score_function": score_function,
+                        "top_k": top_k,
+                        "adv_pos": adv_pos,
+                        "data_points": len(data),
+                    }
+                    results_dict.update(quantile_dict)
+                    results.append(results_dict)
 
                     print(f"Processed: {filepath}")
 
@@ -112,9 +112,9 @@ def main():
 
     print("Starting JSON file analysis...")
     print(f"Root directory: {os.path.abspath(root_directory)}")
-
+    quantiles = [0.95, 0.90, 0.85, 0.80]
     # Process all JSON files
-    results = process_json_files(root_directory)
+    results = process_json_files(root_directory, quantiles)
 
     if not results:
         print("No matching JSON files found!")
@@ -146,20 +146,6 @@ def main():
     print("\nSummary by dataset:")
     summary = df.groupby(["dataset", "adv_pos"]).size().reset_index(name="file_count")
     print(summary.to_string(index=False))
-
-    # Display first few rows
-    print("\nFirst 5 rows of results:")
-    print(
-        df[
-            [
-                "adv_pos",
-                "5th_highest_quantile_95th_percentile",
-                "10th_highest_quantile_90th_percentile",
-            ]
-        ]
-        .head()
-        .to_string(index=False)
-    )
 
 
 if __name__ == "__main__":
