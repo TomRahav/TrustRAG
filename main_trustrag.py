@@ -83,7 +83,7 @@ def parse_args():
         "--attack_method",
         type=str,
         default="LM_targeted",
-        choices=["none", "LM_targeted", "hotflip", "pia"],
+        choices=["none", "LM_targeted", "hotflip", "pia", "gcg"],
     )
     parser.add_argument(
         "--adv_per_query",
@@ -112,7 +112,14 @@ def parse_args():
         "--removal_method",
         type=str,
         default="kmeans_ngram",
-        choices=["none", "kmeans", "kmeans_ngram", "drift", "all"],
+        choices=[
+            "none",
+            "kmeans",
+            "kmeans_ngram",
+            "drift",
+            "drift_kmeans_ngram",
+            "all",
+        ],
     )
     parser.add_argument(
         "--defend_method",
@@ -338,10 +345,18 @@ def main():
                     adv_text_set = [pia_attack]
                 sorted_contents.append(topk_contents.copy())
             if (
-                args.removal_method in ["drift", "kmeans", "kmeans_ngram"]
+                args.removal_method
+                in ["drift", "kmeans", "kmeans_ngram", "drift_kmeans_ngram"]
             ) and args.top_k != 1:
                 with timed(f"Iter_{iter}_question_{i}_removal"):
-                    if args.removal_method == "drift":
+                    if "kmeans" in args.removal_method:
+                        topk_contents = k_mean_filtering(
+                            embedding_tokenizer,
+                            embedding_model,
+                            topk_contents,
+                            "ngram" in args.removal_method,
+                        )
+                    if "drift" in args.removal_method:
                         topk_contents = drift_filtering(
                             args,
                             tokenizer,
@@ -350,13 +365,6 @@ def main():
                             question,
                             topk_contents,
                             args.score_function,
-                        )
-                    else:
-                        topk_contents = k_mean_filtering(
-                            embedding_tokenizer,
-                            embedding_model,
-                            topk_contents,
-                            "ngram" in args.removal_method,
                         )
             if args.removal_method == "all":
                 topk_contents = []
@@ -414,7 +422,7 @@ def main():
     total_adv_num = args.M * args.repeat_times * args.adv_per_query
     logger.info(f"total_topk_num: {total_topk_num}")
     logger.info(f"total_adv_num: {total_adv_num}")
-    if args.removal_method in ["drift", "kmeans", "kmeans_ngram"]:
+    if "drift" in args.removal_method or "kmeans" in args.removal_method:
         logger.info(
             f"False removal rate in true content contents: {(1-total_original_top_k_text_pass_removal/total_topk_num):.2f}%"
         )

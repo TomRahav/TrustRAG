@@ -2,6 +2,8 @@ from sentence_transformers import SentenceTransformer
 import torch
 import random
 from src.utils import cos_similarity, load_json, progress_bar
+import nanogcg
+from nanogcg import GCGConfig
 from loguru import logger
 
 
@@ -95,6 +97,8 @@ class Attacker:
                 adv_text_groups.append(adv_texts)
         elif self.attack_method == "hotflip":
             adv_text_groups = self.hotflip(target_queries)
+        elif self.attack_method == "gcg":
+            adv_text_groups = self.gcg(target_queries)
         else:
             raise NotImplementedError
         return adv_text_groups
@@ -232,6 +236,27 @@ class Attacker:
                     skip_special_tokens=True,
                     clean_up_tokenization_spaces=False,
                 )
+                adv_texts.append(adv_text)
+            adv_text_groups.append(adv_texts)
+
+        return adv_text_groups
+
+    def gcg(self, target_queries, **kwargs) -> list:
+        adv_text_groups = []
+        gcg_config = GCGConfig()
+        for query_score in progress_bar(target_queries, desc="Processing GCG queries"):
+            query = query_score["query"]
+            # top1_score = query_score["top1_score"]
+            id = query_score["id"]
+            adv_texts_b = self.all_adv_texts[id]["adv_texts"]
+            gcg_config.optim_str_init = query
+            adv_texts = []
+            for j in range(self.adv_per_query):
+                adv_b = adv_texts_b[j]
+                gcg_result = nanogcg.run(
+                    self.c_model, self.tokenizer, query, adv_b, gcg_config
+                )
+                adv_text = gcg_result.best_string
                 adv_texts.append(adv_text)
             adv_text_groups.append(adv_texts)
 
